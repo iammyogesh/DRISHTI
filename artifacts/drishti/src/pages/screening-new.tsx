@@ -407,15 +407,15 @@ export default function NewScreening() {
         return;
       }
 
-      // Generate optimized 512x512 JPEG fundus image
+      // Generate optimized 384x384 JPEG fundus image matching native PyTorch model resolution
       const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
+      canvas.width = 384;
+      canvas.height = 384;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(img, 0, 0, 512, 512);
+        ctx.drawImage(img, 0, 0, 384, 384);
       }
-      const compressedB64 = canvas.toDataURL("image/jpeg", 0.88);
+      const compressedB64 = canvas.toDataURL("image/jpeg", 0.90);
 
       const sizeKb = (file.size / 1024).toFixed(1);
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
