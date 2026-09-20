@@ -104,15 +104,6 @@ def analyze(req: AnalyzeRequest):
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
 
-        # Attach MATLAB metadata and preprocessed layers
-        try:
-            img_bgr = decode_image_input(req.image)
-            if img_bgr is not None:
-                matlab_meta = run_matlab_full_pipeline(img_bgr)
-                result["matlabEngine"] = matlab_meta
-        except Exception as e:
-            print(f"[WARN] MATLAB layer augmentation note: {e}")
-
         return result
     except HTTPException:
         raise

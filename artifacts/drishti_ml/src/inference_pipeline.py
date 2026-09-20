@@ -204,6 +204,13 @@ def analyze_fundus_image(
     if img_bgr is None:
         return {"error": "Invalid or unreadable fundus image input."}
 
+    # Cap image to 1024px max to prevent OOM on constrained servers
+    MAX_DIM = 1024
+    h0, w0 = img_bgr.shape[:2]
+    if max(h0, w0) > MAX_DIM:
+        scale = MAX_DIM / max(h0, w0)
+        img_bgr = cv2.resize(img_bgr, (int(w0 * scale), int(h0 * scale)), interpolation=cv2.INTER_AREA)
+
     # =========================================================================
     # 1. MATLAB Image Quality Assessment Gate
     # =========================================================================
@@ -265,6 +272,16 @@ def analyze_fundus_image(
     is_referable = bool(referable_probability >= 0.5 or pred_class >= 2)
 
     class_probs_map = {str(loaded.idx_to_class.get(i, i)): round(float(probs_np[i]), 4) for i in range(len(probs_np))}
+
+    # Free forward-pass tensors before GradCAM allocates more memory
+    import gc
+    del logits, probs
+    if run_tta:
+        del flipped, logits_flip, probs_flip
+    gc.collect()
+
+    # Re-create tensor for GradCAM (needed fresh after del)
+    tensor = _to_tensor(preprocessed_rgb, loaded.device)
 
     result["grade"] = pred_class
     result["gradeLabel"] = config.CLASS_NAMES.get(pred_class, f"Grade {pred_class}")

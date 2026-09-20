@@ -608,6 +608,7 @@ def matlab_gradcam_computation(
         if isinstance(mod, (torch.nn.Conv2d,)):
             target_layer = mod
 
+    import gc
     if target_layer is not None:
         h1 = target_layer.register_forward_hook(fwd_hook)
         h2 = target_layer.register_full_backward_hook(bwd_hook)
@@ -615,7 +616,7 @@ def matlab_gradcam_computation(
         model.zero_grad()
         logits = model(tensor)
         score = logits[0, target_class]
-        score.backward(retain_graph=True)
+        score.backward()  # no retain_graph — frees compute graph immediately
 
         h1.remove()
         h2.remove()
@@ -629,6 +630,10 @@ def matlab_gradcam_computation(
             cam = F.interpolate(cam, size=(h_orig, w_orig), mode="bilinear", align_corners=False)
             cam_np = cam.squeeze().detach().cpu().numpy()
             cam_norm = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
+            del cam, cam_np, fmaps, grads, weights, logits, score
+            feature_maps.clear()
+            gradients.clear()
+            gc.collect()
         else:
             cam_norm = np.zeros((h_orig, w_orig), dtype=np.float32)
     else:
