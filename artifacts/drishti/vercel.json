@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://drishti-evbv.onrender.com"
+      "destination": "https://drishti-evbv.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
