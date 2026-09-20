@@ -19,6 +19,25 @@ function getLocalIpAddresses(): string[] {
   return ips;
 }
 
+// ── ML Service Keep-Alive ──────────────────────────────────────────────────
+// Pings the ML microservice on backend startup and every 14 minutes so
+// Render's free tier never spins it down (Render sleeps after 15 min idle).
+function pingMlService() {
+  const mlUrl = (process.env["DRISHTI_ML_URL"] || "").trim().replace(/\/+$/, "");
+  if (!mlUrl) return;
+  fetch(`${mlUrl}/health`, { signal: AbortSignal.timeout(15000) })
+    .then((r) => logger.info(`[ML-KEEPALIVE] ML service ping → ${r.status}`))
+    .catch((e) => logger.warn(`[ML-KEEPALIVE] ML service unreachable: ${e.message}`));
+}
+
+function startMlKeepAlive() {
+  // Wake immediately on backend start
+  pingMlService();
+  // Then ping every 14 minutes to prevent sleep
+  setInterval(pingMlService, 14 * 60 * 1000);
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 // Initialize PostgreSQL tables if DATABASE_URL is present
 initPostgresTables()
   .then(() => {
@@ -32,11 +51,13 @@ initPostgresTables()
         console.log(` Network IPv4 access: http://${ip}:${port}`);
       });
       console.log(`======================================================\n`);
+      startMlKeepAlive();
     });
   })
   .catch((err) => {
     logger.error(err, "Failed during database table initialization startup");
     app.listen(port, host, () => {
       logger.info({ port, host }, `DRISHTI API Server started with fallback configuration`);
+      startMlKeepAlive();
     });
   });
