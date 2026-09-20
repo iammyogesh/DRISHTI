@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import {
   ArrowLeft,
   CheckCircle2,
-  FileText,
-  Flag,
+  Lock,
   Save,
-  ShieldAlert,
   ShieldCheck,
   UserCheck,
-  Sparkles,
+  AlertTriangle,
+  FileCheck2,
 } from "lucide-react";
 import { useGetCase, useReviewCase } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
@@ -34,17 +33,22 @@ export default function Review() {
   const detail = query.data as { analysis?: DemoAnalysis } | undefined;
   const analysis = detail?.analysis ?? demoAnalysisByGrade[caseItem.aiGrade] ?? demoAnalysis;
 
+  const isAlreadyReviewed = caseItem.reviewStatus === "REVIEWED" || Boolean(caseItem.finalGrade !== undefined && caseItem.finalGrade !== null);
+
   const [grade, setGrade] = useState<number>(caseItem.finalGrade ?? caseItem.aiGrade);
   const [overrideReason, setOverrideReason] = useState("");
   const [notes, setNotes] = useState(
     caseItem.reviewerNotes ||
       (caseItem.aiGrade >= 2
-        ? "Findings consistent with referable diabetic retinopathy. Recommend 3–6 month ophthalmic evaluation, glycemic control, and tele-consultation."
-        : "Retinal vasculature within normal limits. Advised annual diabetic eye screening and routine metabolic management.")
+        ? "Findings consistent with referable diabetic retinopathy. Recommend 3–6 month ophthalmic evaluation, glycemic regulation, and optical coherence tomography."
+        : "Retinal vasculature within normal limits. Advised annual diabetic eye screening and metabolic control.")
   );
+  const [isSigned, setIsSigned] = useState(isAlreadyReviewed);
+  const [signedAt, setSignedAt] = useState<string>(new Date().toLocaleString());
 
-  const doctorName = user?.fullName || "Consultant Ophthalmologist";
+  const doctorName = user?.fullName || caseItem.reviewerName || "Consultant Ophthalmologist";
   const doctorReg = user?.registrationId || "MCI-2022-84920";
+  const hospital = user?.hospitalName || "Apex Eye Hospital";
 
   const isOverride = grade !== analysis.grade;
 
@@ -54,19 +58,26 @@ export default function Review() {
         caseId: id,
         data: {
           finalGrade: grade,
-          notes: `${notes}${isOverride && overrideReason ? ` | Doctor Override Rationale: ${overrideReason}` : ""}`,
+          notes: `${notes}${isOverride && overrideReason ? ` | Clinician Override Rationale: ${overrideReason}` : ""}`,
         },
       },
       {
-        onSuccess: () => setLocation(`/cases/${id}`),
-        onError: () => setLocation(`/cases/${id}`),
+        onSuccess: () => {
+          setIsSigned(true);
+          setSignedAt(new Date().toLocaleString());
+          setLocation(`/cases/${id}`);
+        },
+        onError: () => {
+          setIsSigned(true);
+          setSignedAt(new Date().toLocaleString());
+          setLocation(`/cases/${id}`);
+        },
       }
     );
   };
 
-  const [selectedLayer, setSelectedLayer] = useState<"Original" | "CLAHE" | "Grad-CAM" | "Vessels" | "Lesions">("Original");
+  const [selectedLayer, setSelectedLayer] = useState<"Original" | "Enhanced" | "Grad-CAM" | "Vessels" | "Lesions">("Original");
 
-  // Determine actual image source from uploaded base64 / analysis overlays / case record
   const originalImage =
     caseItem.imageUrl && caseItem.imageUrl.startsWith("data:image")
       ? caseItem.imageUrl
@@ -76,7 +87,7 @@ export default function Review() {
       ? `data:image/png;base64,${analysis.images.enhanced}`
       : caseItem.imageUrl || null;
 
-  const claheImage =
+  const enhancedImage =
     analysis.images?.enhanced
       ? `data:image/png;base64,${analysis.images.enhanced}`
       : originalImage;
@@ -97,8 +108,8 @@ export default function Review() {
       : originalImage;
 
   const displayImgUrl =
-    selectedLayer === "CLAHE"
-      ? claheImage
+    selectedLayer === "Enhanced"
+      ? enhancedImage
       : selectedLayer === "Grad-CAM"
       ? gradcamImage
       : selectedLayer === "Vessels"
@@ -108,159 +119,172 @@ export default function Review() {
       : originalImage;
 
   return (
-    <div className="mx-auto max-w-[1400px]">
+    <div className="space-y-6">
+      {/* Context Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg border border-border bg-card">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <span className="font-bold text-foreground text-sm">
+            {caseItem.patientName || "Patient"}
+          </span>
+          <span className="mono text-muted-foreground font-semibold">
+            ID: {caseItem.patientId || "PAT-88402"}
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-semibold text-primary">
+            {caseItem.eye} Eye
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground">Case: {id}</span>
+        </div>
+
+        {isSigned && (
+          <StatusChip tone="good">
+            Signed Clinical Review
+          </StatusChip>
+        )}
+      </div>
+
       <PageHeader
-        eyebrow={`Ophthalmologist Clinical Review · Case ${id}`}
-        title="Diagnostic Review & Clinical Sign-Off"
-        description="Review AI multi-class findings, Grad-CAM evidence, and retinal images. Enter your final clinical assessment and sign the official diagnostic report."
+        eyebrow="Clinician Assessment & Review"
+        title="Final Clinical Assessment"
+        description="Review AI screening suggestions, visual evidence, and retinal photographs to enter your final clinical DR grade and sign the verified assessment record."
         action={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Link
               href={`/analysis/${id}`}
               className="btn-quiet"
               data-testid="link-review-analysis"
             >
-              <ArrowLeft size={14} /> Back to Workstation
+              <ArrowLeft size={14} /> Back to workstation
             </Link>
-            <button
-              className="btn-primary"
-              onClick={submit}
-              disabled={review.isPending || !notes.trim()}
-              data-testid="button-save-review"
-            >
-              <Save size={15} /> {review.isPending ? "Signing…" : "Sign & Finalize Review"}
-            </button>
+            {!isSigned && (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={submit}
+                disabled={review.isPending || !notes.trim()}
+                data-testid="button-save-review"
+              >
+                <CheckCircle2 size={14} /> {review.isPending ? "Signing…" : "Sign & finalize clinical review"}
+              </button>
+            )}
           </div>
         }
       />
 
       {query.isLoading && !query.data ? (
-        <LoadingState label="Preparing review workspace…" />
+        <LoadingState label="Loading review workspace…" />
       ) : (
         <>
           {query.isError && (
-            <div className="mb-5">
+            <div className="mb-4">
               <ErrorState retry={() => query.refetch()} />
             </div>
           )}
 
-          {/* Clinical Banner */}
-          <div className="mb-6 rounded-2xl border border-[#5c9565]/30 bg-[#dcebdc]/20 p-4">
-            <div className="flex items-start gap-3.5">
-              <ShieldCheck className="mt-0.5 text-primary" size={22} />
-              <div className="text-xs leading-5">
-                <strong className="text-sm font-bold text-foreground">
-                  Clinical Decision Protocol
-                </strong>
-                <p className="mt-0.5 text-muted-foreground">
-                  AI screening predictions are designed as decision support. Final medical diagnosis, referral routing, and patient management recommendations are determined and signed by the reviewing ophthalmologist.
-                </p>
+          {/* Locked Notice if already signed */}
+          {isSigned && (
+            <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/70 p-3.5 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900/50 dark:text-emerald-300 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock size={15} className="text-emerald-700 dark:text-emerald-400" />
+                <span>
+                  <strong>Assessment Signed & Locked:</strong> Finalized by <strong>{doctorName}</strong> on {signedAt}.
+                </span>
+              </div>
+              <Link href={`/cases/${id}`} className="font-semibold underline text-emerald-800 dark:text-emerald-300">
+                View Case Record
+              </Link>
+            </div>
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+            {/* Left: Retinal Image & AI Evidence Summary */}
+            <div className="space-y-4">
+              <div className="panel overflow-hidden">
+                <div className="p-3.5 border-b border-border/70 flex items-center justify-between bg-muted/20">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-bold text-foreground">Fundus Examination</span>
+                    <span className="text-muted-foreground">({caseItem.eye} Eye)</span>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-md">
+                    {(["Original", "Enhanced", "Grad-CAM", "Vessels", "Lesions"] as const).map((layer) => (
+                      <button
+                        key={layer}
+                        type="button"
+                        onClick={() => setSelectedLayer(layer)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+                          selectedLayer === layer
+                            ? "bg-card text-primary shadow-2xs font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {layer}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center bg-slate-950 p-6 min-h-[320px]">
+                  <div className="relative aspect-square w-full max-w-[340px] rounded-full overflow-hidden border-4 border-slate-800 shadow-lg bg-black">
+                    {displayImgUrl ? (
+                      <img
+                        src={displayImgUrl}
+                        alt="Retinal photograph"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <div className="size-full bg-slate-900" />
+                    )}
+
+                    {selectedLayer === "Grad-CAM" && !analysis.images?.gradcam_overlay && (
+                      <div
+                        className="absolute inset-0 pointer-events-none mix-blend-screen"
+                        style={{
+                          background:
+                            analysis.grade >= 2
+                              ? "radial-gradient(circle at 62% 44%, rgba(239, 68, 68, 0.45) 0%, rgba(245, 158, 11, 0.3) 30%, transparent 65%)"
+                              : "radial-gradient(circle at 60% 42%, rgba(245, 158, 11, 0.3) 0%, transparent 50%)",
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* AI Screening Result Reference Card */}
+                <div className="p-4 border-t border-border/60 bg-muted/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="eyebrow text-[10px]">AI Screening Suggestion</span>
+                    <span className="mono text-[11px] font-semibold text-primary">
+                      {Math.round(analysis.confidence * 100)}% confidence
+                    </span>
+                  </div>
+                  <div className="font-bold text-sm text-foreground">
+                    Grade {analysis.grade} — {analysis.gradeLabel}
+                  </div>
+                  <ul className="text-[11px] text-muted-foreground space-y-1 pt-1 list-disc list-inside">
+                    {analysis.evidence.map((ev, i) => (
+                      <li key={i}>{ev}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
-            {/* Left: Retinal Scan & Evidence */}
-            <section className="panel flex flex-col overflow-hidden">
-              <div className="border-b border-border/70 p-5 bg-muted/20 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="eyebrow">Retinal Scan & Evidence Summary</div>
-                  <h2 className="font-serif text-xl font-bold text-foreground mt-0.5">
-                    {caseItem.eye} Eye ({caseItem.caseId})
-                  </h2>
-                </div>
-                <StatusChip tone={analysis.referable ? "danger" : "good"}>
-                  AI Prediction: Grade {analysis.grade} ({analysis.gradeLabel})
-                </StatusChip>
+            {/* Right: Clinician Decision Panel */}
+            <div className="panel p-5 sm:p-6 space-y-5">
+              <div>
+                <span className="eyebrow text-[10px]">Clinician Grading</span>
+                <h2 className="text-base font-bold text-foreground mt-0.5">
+                  Select Final Clinical Assessment
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Confirm or modify the severity grade. AI suggestion is provided for decision support.
+                </p>
               </div>
 
-              {/* Layer Selection Controls */}
-              <div className="flex items-center justify-between border-b border-border/60 px-5 py-2.5 bg-muted/10 text-xs">
-                <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Inspect Retinal Layer:</span>
-                <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl">
-                  {(["Original", "CLAHE", "Grad-CAM", "Vessels", "Lesions"] as const).map((layer) => (
-                    <button
-                      key={layer}
-                      type="button"
-                      onClick={() => setSelectedLayer(layer)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        selectedLayer === layer
-                          ? "bg-card text-primary shadow-xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {layer}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Retinal Image Frame */}
-              <div className="flex flex-1 items-center justify-center bg-[#0c141f] p-6">
-                <div className="retina-disc relative aspect-square w-full max-w-[420px] rounded-full border-[10px] border-[#14202e] shadow-2xl overflow-hidden bg-black flex items-center justify-center">
-                  {/* Real Image Render */}
-                  {displayImgUrl ? (
-                    <img
-                      src={displayImgUrl}
-                      alt="Fundus Retinal Scan"
-                      className="size-full object-cover select-none"
-                    />
-                  ) : (
-                    <div className="size-full bg-gradient-to-tr from-amber-950/80 via-red-950/60 to-orange-950/90" />
-                  )}
-
-                  {/* Grad-CAM Overlay Blend (if selected layer or fallback) */}
-                  {selectedLayer === "Grad-CAM" && !analysis.images?.gradcam_overlay && (
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background:
-                          analysis.grade >= 2
-                            ? "radial-gradient(circle at 62% 44%, rgba(239, 68, 68, 0.45) 0%, rgba(245, 158, 11, 0.3) 30%, transparent 65%)"
-                            : "radial-gradient(circle at 60% 42%, rgba(245, 158, 11, 0.3) 0%, transparent 50%)",
-                      }}
-                    />
-                  )}
-
-                  {/* Lesion Markers */}
-                  {(selectedLayer === "Lesions" || selectedLayer === "Original") &&
-                    analysis.lesions.map((lesion, idx) => (
-                      <span
-                        key={idx}
-                        className="absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-400 bg-amber-400/40 shadow-[0_0_8px_rgba(251,191,36,0.8)] pointer-events-none"
-                        style={{ left: `${lesion.x}%`, top: `${lesion.y}%` }}
-                        title={`${lesion.type} (${Math.round(lesion.confidence * 100)}%)`}
-                      />
-                    ))}
-                </div>
-              </div>
-
-              {/* Evidence Signals */}
-              <div className="border-t border-border/70 p-5 bg-card">
-                <div className="eyebrow mb-2.5">Key AI Retinal Findings</div>
-                <div className="space-y-1.5">
-                  {analysis.evidence.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="mono text-[10px] text-accent font-bold">0{idx + 1}</span>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Right: Doctor Final Assessment & Notes */}
-            <section className="panel flex flex-col p-6 md:p-8">
-              <div className="eyebrow">Doctor Final Assessment</div>
-              <h2 className="mt-1 font-serif text-2xl font-bold text-foreground">
-                Confirm or Modify DR Severity Grade
-              </h2>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                Select your final clinical grade. The AI suggestion is displayed for reference and will not be overwritten in the record.
-              </p>
-
-              {/* Grade Selector */}
-              <div className="mt-6 space-y-2.5">
+              {/* Grade Selection List */}
+              <div className="space-y-2">
                 {gradeLabels.map((label, index) => {
                   const isSelected = grade === index;
                   const isAISuggestion = index === analysis.grade;
@@ -268,45 +292,47 @@ export default function Review() {
                   return (
                     <button
                       key={label}
-                      className={`flex w-full items-center justify-between rounded-xl border p-3.5 text-left transition-all ${
-                        isSelected
-                          ? "border-primary bg-primary/10 ring-2 ring-primary/20 shadow-xs"
-                          : "border-border hover:bg-muted/40"
-                      }`}
+                      type="button"
+                      disabled={isSigned}
                       onClick={() => setGrade(index)}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/10 ring-1 ring-primary shadow-2xs font-semibold"
+                          : "border-border hover:bg-muted/30"
+                      } ${isSigned ? "cursor-default opacity-80" : ""}`}
                       data-testid={`button-grade-${index}`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5">
                         <span
-                          className={`grid size-7 place-items-center rounded-full border text-xs font-bold ${
+                          className={`grid size-6 place-items-center rounded-full text-xs font-bold ${
                             isSelected
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border text-muted-foreground"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {index}
                         </span>
                         <div>
-                          <div className="text-sm font-bold text-foreground">
+                          <div className="text-xs font-bold text-foreground">
                             Grade {index}: {label}
                           </div>
                           <div className="text-[10px] text-muted-foreground">
                             {index === 0
-                              ? "No DR lesions"
+                              ? "No microvascular abnormalities"
                               : index === 1
                               ? "Microaneurysms only"
                               : index === 2
-                              ? "Referable: Microaneurysms, Exudates, Hemorrhages"
+                              ? "Moderate: Microaneurysms, exudates, hemorrhages"
                               : index === 3
-                              ? "Severe: 4-2-1 rule met / Venous beading"
-                              : "Proliferative: Active Neovascularization"}
+                              ? "Severe: 4-2-1 rule met"
+                              : "Proliferative: Active neovascularization"}
                           </div>
                         </div>
                       </div>
 
                       {isAISuggestion && (
-                        <span className="mono rounded bg-secondary/30 px-2 py-0.5 text-[10px] font-bold text-foreground">
-                          AI RESULT
+                        <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          AI suggestion
                         </span>
                       )}
                     </button>
@@ -314,15 +340,16 @@ export default function Review() {
                 })}
               </div>
 
-              {/* Override Rationale (If modified) */}
+              {/* Override rationale if modified */}
               {isOverride && (
-                <div className="mt-4 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3.5 text-xs leading-5">
-                  <div className="font-bold text-amber-700 dark:text-amber-300">
-                    Clinical Override: AI predicted Grade {analysis.grade}, Doctor selected Grade {grade}.
-                  </div>
+                <div className="p-3 rounded-md border border-amber-200/80 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/40 text-xs space-y-1.5">
+                  <span className="font-semibold text-amber-800 dark:text-amber-300 block">
+                    Clinician Override Note:
+                  </span>
                   <input
-                    className="input-field mt-2 text-xs"
-                    placeholder="Enter clinical rationale for override (e.g. peripheral lesion verified on high-res inspection)"
+                    disabled={isSigned}
+                    className="input-field text-xs bg-card"
+                    placeholder="Rationale for overriding AI suggestion (e.g. peripheral lesion verified)"
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     data-testid="input-override-reason"
@@ -330,47 +357,47 @@ export default function Review() {
                 </div>
               )}
 
-              {/* Clinical Recommendations & Notes */}
-              <div className="mt-6 space-y-2">
-                <label className="text-xs font-bold text-foreground">
-                  Ophthalmologist Clinical Findings & Recommendation Plan
+              {/* Findings & Recommendation Plan */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground block">
+                  Clinical findings and recommendation
                 </label>
                 <textarea
-                  className="input-field min-h-[110px] resize-y text-xs leading-5"
+                  disabled={isSigned}
+                  rows={3}
+                  className="input-field text-xs leading-relaxed resize-y"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Enter clinical notes, management advice, and follow-up timeline..."
-                  aria-label="Clinical notes"
+                  placeholder="Enter clinical assessment, follow-up timeline, and management plan…"
                   data-testid="textarea-clinical-notes"
                 />
               </div>
 
-              {/* Authenticated Doctor Signature Box */}
-              <div className="mt-6 rounded-xl border border-border bg-muted/25 p-4 text-xs">
-                <div className="flex items-center gap-2 font-bold text-foreground">
-                  <UserCheck size={16} className="text-primary" />
-                  <span>Authenticated Clinician Signature</span>
+              {/* Authenticated Practitioner Identity Block */}
+              <div className="rounded-lg border border-border bg-muted/20 p-3.5 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-foreground">
+                  <UserCheck size={14} className="text-primary" />
+                  <span>Authenticated Clinician Identity</span>
                 </div>
-                <div className="mt-2 text-xs">
-                  <div className="font-bold text-foreground">{doctorName}</div>
-                  <div className="text-muted-foreground text-[11px]">
-                    Registration ID: <span className="mono font-semibold">{doctorReg}</span> · {user?.hospitalName || "Apex Eye Care"}
-                  </div>
+                <div className="font-semibold text-foreground text-xs pt-0.5">{doctorName}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Medical Registration No: <span className="mono font-medium text-foreground">{doctorReg}</span> · {hospital}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              {/* Sign Action Button */}
+              {!isSigned && (
                 <button
-                  className="btn-primary flex-1"
+                  type="button"
+                  className="btn-primary w-full justify-center !py-2.5 text-xs font-semibold"
                   onClick={submit}
                   disabled={!notes.trim() || review.isPending}
                   data-testid="button-submit-review"
                 >
-                  <CheckCircle2 size={16} /> Sign & Finalize Clinical Review
+                  <CheckCircle2 size={15} /> Sign & finalize clinical review
                 </button>
-              </div>
-            </section>
+              )}
+            </div>
           </div>
         </>
       )}

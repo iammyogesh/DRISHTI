@@ -2,13 +2,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Activity,
-  Archive,
-  BarChart3,
   ClipboardCheck,
   Eye,
   FileText,
-  Gauge,
-  History,
+  LayoutDashboard,
   LogOut,
   Menu,
   Moon,
@@ -19,6 +16,8 @@ import {
   User,
   Users,
   X,
+  Layers,
+  FileCheck2,
 } from "lucide-react";
 import { useHealthCheck } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
@@ -33,10 +32,10 @@ export function ThemeToggle() {
     <button
       aria-label="Toggle theme"
       data-testid="button-toggle-theme"
-      className="btn-quiet !rounded-full !p-2.5"
+      className="btn-quiet !p-2 !rounded-md"
       onClick={() => setDark((value) => !value)}
     >
-      {dark ? <Sun size={16} /> : <Moon size={16} />}
+      {dark ? <Sun size={15} /> : <Moon size={15} />}
     </button>
   );
 }
@@ -49,36 +48,53 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const userRole = user?.role || "Ophthalmologist";
 
-  // Role-Based Navigation Items
-  const navGroups = [
-    {
-      label: "Clinical Operations",
-      items: [
-        { href: "/dashboard", label: "Dashboard", icon: Gauge, roles: ["Ophthalmologist", "Screening Technician", "Administrator"] },
-        { href: "/screening/new", label: "New Screening", icon: Plus, roles: ["Screening Technician", "Ophthalmologist"] },
-        { href: "/cases", label: "Cases & Queue", icon: ClipboardCheck, roles: ["Ophthalmologist", "Screening Technician", "Administrator"] },
-        { href: "/reports", label: "Clinical Reports", icon: FileText, roles: ["Ophthalmologist"] },
-      ],
-    },
-    {
-      label: "System & Management",
-      items: [
-        { href: "/operations", label: "Analytics & Scale", icon: BarChart3, roles: ["Ophthalmologist", "Administrator"] },
-        { href: "/users", label: "User Management", icon: Users, roles: ["Administrator"] },
-        { href: "/security/audit", label: "Audit Trail", icon: ShieldCheck, roles: ["Administrator", "Ophthalmologist"] },
-      ],
-    },
-  ];
+  // Role-Aware Navigation
+  const getNavGroups = () => {
+    if (userRole === "Administrator") {
+      return [
+        {
+          label: "Administration",
+          items: [
+            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/users", label: "Users", icon: Users },
+            { href: "/security/audit", label: "Audit Log", icon: ShieldCheck },
+            { href: "/architecture", label: "System Architecture", icon: Layers },
+          ],
+        },
+      ];
+    }
 
-  const visibleGroups = navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => item.roles.includes(userRole)),
-    }))
-    .filter((group) => group.items.length > 0);
+    if (userRole === "Screening Technician") {
+      return [
+        {
+          label: "Workspace",
+          items: [
+            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { href: "/screening/new", label: "New Screening", icon: Plus },
+            { href: "/cases", label: "Screening Queue", icon: ClipboardCheck },
+          ],
+        },
+      ];
+    }
+
+    // Default: Ophthalmologist
+    return [
+      {
+        label: "Workspace",
+        items: [
+          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/screening/new", label: "New Screening", icon: Plus },
+          { href: "/cases", label: "Cases", icon: ClipboardCheck },
+          { href: "/reports", label: "Reports", icon: FileText },
+        ],
+      },
+    ];
+  };
+
+  const navGroups = getNavGroups();
 
   const getInitials = (name?: string) => {
-    if (!name) return "DR";
+    if (!name) return "MD";
     return name
       .split(" ")
       .map((part) => part[0])
@@ -89,57 +105,47 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
-      {/* FIXED SIDEBAR - DOES NOT SCROLL */}
+      {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[268px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[250px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-200 lg:static lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Sidebar Brand Header */}
-        <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-sidebar-border px-6">
-          <Link href="/dashboard" className="flex items-center gap-3" data-testid="link-brand">
-            <span className="grid size-10 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
-              <Eye size={22} strokeWidth={2.5} />
+        {/* Brand Header */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-5">
+          <Link href="/dashboard" className="flex items-center gap-2.5" data-testid="link-brand">
+            <span className="grid size-8 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold shadow-xs">
+              <Eye size={18} strokeWidth={2.2} />
             </span>
             <div>
-              <strong className="block font-serif text-[1.2rem] tracking-tight">DRISHTI</strong>
-              <span className="mono text-[9px] font-bold uppercase tracking-[.2em] text-sidebar-primary">
-                AI Eye Care
+              <strong className="block text-sm font-bold tracking-tight text-sidebar-foreground">DRISHTI</strong>
+              <span className="block text-[10px] text-sidebar-foreground/60">
+                Ophthalmology Workstation
               </span>
             </div>
           </Link>
           <button
-            className="text-sidebar-foreground/70 lg:hidden"
+            className="text-sidebar-foreground/70 lg:hidden p-1 rounded hover:bg-sidebar-accent"
             onClick={() => setOpen(false)}
             aria-label="Close navigation"
             data-testid="button-close-navigation"
           >
-            <X size={19} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Sidebar Nav Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
-          {/* Health Status Indicator */}
-          <div className="flex items-center justify-between rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2">
-            <div className="flex items-center gap-2">
-              <span className={`size-2 rounded-full ${health.isError ? "bg-amber-400" : "bg-[#5c9565]"}`} />
-              <span className="mono text-[10px] font-bold uppercase tracking-[.1em] text-sidebar-foreground/80">
-                {health.isError ? "Standalone Mode" : "Clinical API Ready"}
-              </span>
-            </div>
-            <span className="mono text-[9px] text-sidebar-foreground/50">v1.2</span>
-          </div>
-
-          {visibleGroups.map((group) => (
+        {/* Navigation Sections */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {navGroups.map((group) => (
             <div key={group.label}>
-              <div className="eyebrow mb-2 px-3 text-sidebar-foreground/40">{group.label}</div>
-              <nav className="space-y-1">
+              <div className="eyebrow mb-1.5 px-3 text-sidebar-foreground/50 text-[10px]">
+                {group.label}
+              </div>
+              <nav className="space-y-0.5">
                 {group.items.map((item) => {
                   const active =
                     location === item.href ||
-                    (item.href === "/cases" && location.startsWith("/cases/")) ||
-                    (item.href === "/screening/new" && location.startsWith("/analysis/"));
+                    (item.href === "/cases" && (location.startsWith("/cases/") || location.startsWith("/analysis/") || location.startsWith("/review/")));
                   const Icon = item.icon;
                   return (
                     <Link
@@ -147,13 +153,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                       href={item.href}
                       data-testid={`link-nav-${item.label.toLowerCase().replaceAll(" ", "-")}`}
                       onClick={() => setOpen(false)}
-                      className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                      className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-xs"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-2xs"
+                          : "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       }`}
                     >
-                      <Icon size={16} />
+                      <Icon size={15} />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -163,106 +169,107 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </div>
 
-        {/* Sidebar Fixed User & Settings Footer */}
-        <div className="shrink-0 border-t border-sidebar-border p-4 bg-sidebar">
+        {/* User Account & Station Footer */}
+        <div className="shrink-0 border-t border-sidebar-border p-3 space-y-1 bg-sidebar">
           <Link
             href="/settings"
             data-testid="link-settings"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+            onClick={() => setOpen(false)}
+            className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
+              location === "/settings"
+                ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
+                : "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            }`}
           >
-            <Settings size={16} /> Settings
+            <Settings size={15} />
+            <span>Settings</span>
           </Link>
 
-          <div className="mt-3 flex items-center justify-between rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-2.5">
-            <Link href="/settings" className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-primary/20 mono text-[11px] font-bold text-sidebar-primary">
+          <div className="flex items-center justify-between rounded-lg border border-sidebar-border/70 bg-sidebar-accent/40 p-2 mt-2">
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 min-w-0 flex-1"
+            >
+              <div className="grid size-7 shrink-0 place-items-center rounded-md bg-sidebar-primary/25 text-[11px] font-bold text-sidebar-primary">
                 {getInitials(user?.fullName)}
               </div>
               <div className="min-w-0">
-                <div className="truncate text-xs font-bold text-sidebar-foreground">
-                  {user?.fullName || "Authenticated User"}
+                <div className="truncate text-xs font-semibold text-sidebar-foreground">
+                  {user?.fullName || "Practitioner"}
                 </div>
-                <div className="truncate text-[10px] text-sidebar-foreground/50">
-                  {user?.role || "Staff"} {user?.hospitalName ? `· ${user.hospitalName}` : ""}
+                <div className="truncate text-[10px] text-sidebar-foreground/60">
+                  {userRole}
                 </div>
               </div>
             </Link>
 
             <button
-              onClick={() => { logout(); setLocation("/"); }}
-              className="p-1.5 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors"
+              onClick={() => {
+                logout();
+                setLocation("/");
+              }}
+              className="p-1.5 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded transition-colors"
               title="Sign Out"
+              aria-label="Sign Out"
             >
-              <LogOut size={15} />
+              <LogOut size={14} />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Drawer Backdrop */}
       {open && (
         <button
-          className="fixed inset-0 z-30 bg-foreground/30 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden backdrop-blur-xs"
           aria-label="Close navigation overlay"
           onClick={() => setOpen(false)}
           data-testid="button-navigation-overlay"
         />
       )}
 
-      {/* MAIN CONTENT AREA - SCROLLS INDEPENDENTLY */}
+      {/* Main Clinical Viewport */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Fixed Top Header (No search bar, clean header with title/status & controls) */}
-        <header className="sticky top-0 z-20 flex h-[70px] shrink-0 items-center justify-between border-b border-border/70 bg-background/85 px-5 backdrop-blur-xl md:px-8">
+        {/* Top Clinical Header */}
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-md md:px-6">
           <div className="flex items-center gap-3">
             <button
-              className="btn-quiet !p-2 lg:hidden"
+              className="btn-quiet !p-1.5 lg:hidden"
               onClick={() => setOpen(true)}
               aria-label="Open navigation"
               data-testid="button-open-navigation"
             >
-              <Menu size={18} />
+              <Menu size={16} />
             </button>
 
             <div className="flex items-center gap-2">
-              <span className="font-serif text-lg font-bold text-foreground">DRISHTI</span>
-              <span className="text-muted-foreground text-xs">•</span>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {userRole} Workstation
+              <span className="text-xs font-semibold text-foreground tracking-tight">
+                {user?.hospitalName || "Clinical Workstation"}
+              </span>
+              <span className="text-muted-foreground/50 text-xs">·</span>
+              <span className="text-[11px] text-muted-foreground">
+                {userRole} Station
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1 sm:flex">
-              <span className="size-2 rounded-full bg-[#5c9565]" />
-              <span className="mono text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                CLINICAL DECISION SUPPORT SYSTEM
+            <div className="hidden items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1 sm:flex text-xs">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Clinical Decision Support
               </span>
             </div>
             <ThemeToggle />
-            <Link
-              href="/security/audit"
-              className="relative rounded-full p-2.5 text-muted-foreground hover:bg-muted transition-colors"
-              aria-label="Open audit trail"
-              data-testid="button-activity"
-            >
-              <History size={17} />
-            </Link>
           </div>
         </header>
 
-        {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-y-auto p-5 md:p-8">
-          <div className="mx-auto max-w-[1480px]">
+        {/* Scrollable Clinical View */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-7">
+          <div className="mx-auto max-w-[1400px]">
             {children}
           </div>
-
-          <footer className="mt-12 flex flex-col sm:flex-row items-center justify-between border-t border-border/60 pt-6 text-[11px] text-muted-foreground gap-2">
-            <span>
-              <strong>DRISHTI</strong> — AI Eye Care Platform · Retinal Screening & Tele-Ophthalmology
-            </span>
-            <span className="mono text-[10px]">CLINICAL ACCOUNTABILITY ENABLED</span>
-          </footer>
         </main>
       </div>
     </div>
@@ -275,19 +282,19 @@ export function PageHeader({
   description,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <div className="mb-6 flex flex-col justify-between gap-3 md:flex-row md:items-end border-b border-border/60 pb-4">
       <div>
-        <div className="eyebrow mb-2">{eyebrow}</div>
-        <h1 className="display-title text-3xl font-extrabold text-foreground md:text-[2.5rem]">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}
+        {eyebrow && <div className="eyebrow mb-1 text-[11px]">{eyebrow}</div>}
+        <h1 className="display-title text-2xl font-bold text-foreground tracking-tight md:text-[1.65rem]">{title}</h1>
+        {description && <p className="mt-1 max-w-3xl text-xs text-muted-foreground leading-relaxed">{description}</p>}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -300,45 +307,45 @@ export function StatusChip({
   tone?: "good" | "warn" | "danger" | "neutral" | "teal";
 }) {
   const tones = {
-    good: "bg-[#dcebdc] text-[#376344] dark:bg-[#23432a] dark:text-[#a7d5ae]",
-    warn: "bg-[#f5e7bd] text-[#7b5d1e] dark:bg-[#4a3a18] dark:text-[#eed281]",
-    danger: "bg-[#f2d4cc] text-[#913e32] dark:bg-[#4e2724] dark:text-[#f4aaa0]",
-    neutral: "bg-muted text-muted-foreground",
-    teal: "bg-[#d5e8e5] text-[#255c58] dark:bg-[#1d403e] dark:text-[#9bd2cb]",
+    good: "bg-emerald-50 text-emerald-800 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+    warn: "bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+    danger: "bg-red-50 text-red-800 border border-red-200/80 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60",
+    neutral: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    teal: "bg-teal-50 text-teal-800 border border-teal-200/80 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60",
   };
   return (
     <span className={`status-chip ${tones[tone]}`}>
-      <span className="size-1.5 rounded-full bg-current" />
+      <span className="size-1.5 rounded-full bg-current opacity-80" />
       {children}
     </span>
   );
 }
 
-export function LoadingState({ label = "Loading clinical workspace" }: { label?: string }) {
+export function LoadingState({ label = "Loading clinical workspace…" }: { label?: string }) {
   return (
-    <div className="space-y-4">
-      <div className="h-20 animate-pulse rounded-2xl bg-muted" />
+    <div className="space-y-4 py-8">
+      <div className="h-16 animate-pulse rounded-lg bg-muted/60" />
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="h-36 animate-pulse rounded-2xl bg-muted" />
-        <div className="h-36 animate-pulse rounded-2xl bg-muted" />
-        <div className="h-36 animate-pulse rounded-2xl bg-muted" />
+        <div className="h-28 animate-pulse rounded-lg bg-muted/60" />
+        <div className="h-28 animate-pulse rounded-lg bg-muted/60" />
+        <div className="h-28 animate-pulse rounded-lg bg-muted/60" />
       </div>
-      <p className="mono text-center text-[10px] uppercase tracking-[.14em] text-muted-foreground">{label}</p>
+      <p className="text-center text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }
 
 export function ErrorState({ retry }: { retry?: () => void }) {
   return (
-    <div className="panel border-accent/30 bg-accent/5 p-8 text-center">
-      <ShieldCheck className="mx-auto mb-3 text-accent" size={25} />
-      <h2 className="font-serif text-xl font-bold">Live API Service Offline</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Operating in standalone resilient mode with offline clinical sample cache.
+    <div className="panel p-6 text-center border-border">
+      <ShieldCheck className="mx-auto mb-2 text-primary" size={24} />
+      <h2 className="text-sm font-bold text-foreground">API Connection Offline</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Operating in resilient local fallback mode with cached clinical records.
       </p>
       {retry && (
-        <button className="btn-quiet mt-5" onClick={retry} data-testid="button-retry">
-          <Archive size={14} /> Retry Connection
+        <button className="btn-quiet mt-4 text-xs" onClick={retry} data-testid="button-retry">
+          Retry Connection
         </button>
       )}
     </div>
