@@ -1,0 +1,14 @@
+# DRISHTI PyTorch Machine Learning Inference Engine Requirements
+# Tested on Python 3.10 - 3.12 (CPU and CUDA GPU environments)
+
+torch>=2.2.0
+torchvision>=0.17.0
+timm>=1.0.0
+opencv-python-headless>=4.9.0
+scikit-image>=0.22.0
+pillow>=10.0.0
+numpy>=1.24.0
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.6.0
+grad-cam>=1.5.0

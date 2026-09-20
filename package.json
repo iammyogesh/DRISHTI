@@ -1,0 +1,24 @@
+{
+  "name": "drishti-workspace",
+  "version": "1.0.0",
+  "description": "DRISHTI — AI Eye Care: Diabetic Retinopathy Screening & Tele-Ophthalmology Workflow System",
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm --filter @workspace/drishti run dev",
+    "dev:all": "pnpm -r --parallel run dev",
+    "dev:server": "pnpm --filter @workspace/api-server run dev",
+    "dev:client": "pnpm --filter @workspace/drishti run dev",
+    "ml:service": "python artifacts/drishti_ml/service.py",
+    "ml:predict": "python artifacts/drishti_ml/predict.py",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "start": "pnpm --filter @workspace/api-server run start"
+  },
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
+  }
+}

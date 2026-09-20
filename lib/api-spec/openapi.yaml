@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Drishti clinical screening API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: screening
+  - name: cases
+  - name: analysis
+  - name: operations
+  - name: research
+  - name: audit
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [screening]
+      summary: Get clinical dashboard overview
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List screening cases
+      responses:
+        "200":
+          description: Cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a screening case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseInput"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+  /cases/{caseId}:
+    get:
+      operationId: getCase
+      tags: [cases]
+      summary: Get a case with history
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: Case detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseDetail"
+  /cases/{caseId}/review:
+    post:
+      operationId: reviewCase
+      tags: [cases]
+      summary: Save ophthalmologist review
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Reviewed case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+  /screening/analyze:
+    post:
+      operationId: analyzeScreening
+      tags: [analysis]
+      summary: Run quality gate and demo AI assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalysisInput"
+      responses:
+        "200":
+          description: AI assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+  /research/summary:
+    get:
+      operationId: getResearchSummary
+      tags: [research]
+      summary: Get research and validation summary
+      responses:
+        "200":
+          description: Research summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchSummary"
+  /operations/summary:
+    get:
+      operationId: getOperationsSummary
+      tags: [operations]
+      summary: Get district operations summary
+      responses:
+        "200":
+          description: Operations summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationsSummary"
+  /audit:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit events
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+components:
+  parameters:
+    CaseId:
+      name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    CaseInput:
+      type: object
+      required: [caseId, researchId, age, diabetesType, eye, consent]
+      properties:
+        caseId: { type: string }
+        researchId: { type: string }
+        age: { type: number }
+        diabetesType: { type: string }
+        eye: { type: string, enum: [Right, Left, Both] }
+        consent: { type: boolean }
+    Case:
+      type: object
+      required: [caseId, researchId, eye, qualityStatus, aiGrade, confidence, referable, reviewStatus, createdAt]
+      properties:
+        caseId: { type: string }
+        researchId: { type: string }
+        age: { type: number }
+        diabetesType: { type: string }
+        eye: { type: string }
+        qualityStatus: { type: string, enum: [GOOD, BORDERLINE, UNGRADABLE] }
+        aiGrade: { type: number, minimum: 0, maximum: 4 }
+        aiLabel: { type: string }
+        confidence: { type: number }
+        referable: { type: boolean }
+        reviewStatus: { type: string, enum: [AWAITING_REVIEW, REVIEWED, UNGRADABLE] }
+        finalGrade: { type: ["number", "null"] }
+        createdAt: { type: string }
+    CaseDetail:
+      allOf:
+        - $ref: "#/components/schemas/Case"
+        - type: object
+          properties:
+            history:
+              type: array
+              items:
+                $ref: "#/components/schemas/HistoryEntry"
+            analysis:
+              $ref: "#/components/schemas/Analysis"
+    HistoryEntry:
+      type: object
+      required: [date, grade, label]
+      properties:
+        date: { type: string }
+        grade: { type: number }
+        label: { type: string }
+        reviewer: { type: string }
+    ReviewInput:
+      type: object
+      required: [finalGrade, notes]
+      properties:
+        finalGrade: { type: number, minimum: 0, maximum: 4 }
+        notes: { type: string }
+    AnalysisInput:
+      type: object
+      required: [caseId, imageName]
+      properties:
+        caseId: { type: string }
+        imageName: { type: string }
+    Quality:
+      type: object
+      required: [score, status, focus, illumination, fieldOfView, coverage, artifacts, feedback]
+      properties:
+        score: { type: number }
+        status: { type: string }
+        focus: { type: number }
+        illumination: { type: number }
+        fieldOfView: { type: number }
+        coverage: { type: number }
+        artifacts: { type: number }
+        feedback: { type: string }
+    Analysis:
+      type: object
+      required: [grade, gradeLabel, confidence, referable, probabilities, modelVersion, processingTime, quality]
+      properties:
+        grade: { type: number }
+        gradeLabel: { type: string }
+        confidence: { type: number }
+        referable: { type: boolean }
+        probabilities:
+          type: object
+          additionalProperties: { type: number }
+        modelVersion: { type: string }
+        processingTime: { type: number }
+        quality:
+          $ref: "#/components/schemas/Quality"
+        evidence:
+          type: array
+          items: { type: string }
+        lesions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lesion"
+        shapAvailable: { type: boolean }
+    Lesion:
+      type: object
+      required: [type, confidence, x, y]
+      properties:
+        type: { type: string }
+        confidence: { type: number }
+        x: { type: number }
+        y: { type: number }
+    Dashboard:
+      type: object
+      required: [today, awaitingReview, referable, ungradable, averageProcessing, agreement, cases]
+      properties:
+        today: { type: number }
+        awaitingReview: { type: number }
+        referable: { type: number }
+        ungradable: { type: number }
+        averageProcessing: { type: number }
+        agreement: { type: number }
+        cases:
+          type: array
+          items: { $ref: "#/components/schemas/Case" }
+    ResearchSummary:
+      type: object
+      required: [datasetCount, sampleCount, modelVersion, measuredStatus, gradeDistribution]
+      properties:
+        datasetCount: { type: number }
+        sampleCount: { type: number }
+        modelVersion: { type: string }
+        measuredStatus: { type: string }
+        gradeDistribution:
+          type: object
+          additionalProperties: { type: number }
+    OperationsSummary:
+      type: object
+      required: [patients, images, referable, pending, capacity, staffing]
+      properties:
+        patients: { type: number }
+        images: { type: number }
+        referable: { type: number }
+        pending: { type: number }
+        capacity: { type: number }
+        staffing: { type: number }
+    AuditLog:
+      type: object
+      required: [timestamp, user, action, caseId]
+      properties:
+        timestamp: { type: string }
+        user: { type: string }
+        action: { type: string }
+        caseId: { type: string }
+

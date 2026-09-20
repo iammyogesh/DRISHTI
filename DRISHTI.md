@@ -1,0 +1,479 @@
+# DRISHTI
+## SIH 2026 — Complete Product, AI & Deployment Plan
+*Explainable, Quality-Aware Diabetic Retinopathy Screening for Resource-Constrained Healthcare*
+
+| Field | Details |
+|---|---|
+| Team Name | Agrim |
+| Team ID | - |
+| Problem Statement ID / Title | Explainable AI for Diabetic Retinopathy Screening in Rural India |
+| Institution | GL Bajaj Group of Institutions, Mathura |
+| Team Members | - |
+| Document Version | - |
+
+## 1. Problem Statement
+
+India has a very large diabetic population and diabetic retinopathy (DR) is a major cause of preventable vision loss. The shortage of ophthalmologists, especially in rural areas, makes mass manual screening difficult. Existing AI systems can behave like black boxes and may perform poorly when fundus images from portable cameras have variable focus, illumination, field of view, and quality.
+
+The proposed system addresses these challenges through an integrated AI-based screening pipeline (Python for the internal hackathon prototype; migrating to MATLAB/Simulink for SIH nationals — see Section 3):
+
+- Automatic fundus image quality assessment and adaptive enhancement.
+- Retinal structure and lesion analysis.
+- DR severity grading using the International Clinical DR severity scale (Levels 0–4).
+- Referable DR detection for Grade/Level 2+.
+- Explainability through Grad-CAM, lesion-level evidence, and calibrated confidence.
+- Human-in-the-loop ophthalmologist validation.
+- Automated annotated reports.
+- Simulink-based telemedicine and district-scale resource simulation for 100,000+ patients/year.
+
+## 2. Core Product Vision
+
+DRISHTI should be presented as a clinical decision-support and research platform — not merely an AI classifier. The central idea is: AI screens and explains; the ophthalmologist validates and makes the final clinical decision.
+
+**Core workflow:**
+
+Fundus Image → Quality Gate → Enhancement → AI DR Classification → Lesion/Vessel Evidence → Grad-CAM → Confidence → Ophthalmologist Review → Report → Referral / Research Analytics → District Simulation
+
+## 3. Tooling Strategy: Internal Hackathon vs SIH Nationals
+
+MATLAB is not compulsory for the internal/college-level hackathon, but it is a compulsory requirement for SIH nationals. With roughly 25 days of total prep time, wiring a live MATLAB inference engine to a web front end is the single highest-risk technical dependency in this plan — it costs hours that are better spent on the model and the demo. The decision below keeps the internal build fast and de-risked while keeping a clear, low-effort path to the MATLAB-based stack SIH requires.
+
+**Decision**
+
+- Internal hackathon: build the AI engine and image-processing pipeline in Python. It integrates natively with the FastAPI backend and is far quicker to get working end-to-end in a short build.
+- SIH nationals (after qualifying): port the trained model and pipeline logic to MATLAB (Deep Learning Toolbox + Image Processing Toolbox), since it becomes compulsory at that stage.
+- Migration risk is low: MATLAB's Deep Learning Toolbox can import a PyTorch/TensorFlow model directly via ONNX (importNetworkFromONNX), so the trained weights do not need to be retrained from scratch when porting.
+
+| Component | Internal Hackathon | SIH Nationals | Migration effort |
+|---|---|---|---|
+| DR classification / AI engine | Python (PyTorch or TensorFlow) | MATLAB Deep Learning Toolbox (import trained model via ONNX) | Low |
+| Image quality & enhancement | OpenCV / scikit-image (CLAHE, denoising) | MATLAB Image Processing Toolbox | Low — equivalent functions in both |
+| Grad-CAM / explainability | pytorch-grad-cam or tf-keras-vis | MATLAB Deep Learning Toolbox Grad-CAM | Low |
+| District resource simulation | Simulink (as originally planned); SimPy queueing model only if Simulink time/licensing is tight | Simulink | None to low |
+
+This section should be revisited once the internal hackathon is done and the actual SIH problem statement / evaluation criteria are confirmed, in case MATLAB use is scored even before nationals.
+
+## 4. What We Must Demonstrate
+
+| Priority | Feature | 36-hour goal |
+|---|---|---|
+| MUST | Fundus upload | Working |
+| MUST | Image quality assessment | Working |
+| MUST | CLAHE / enhancement | Working |
+| MUST | DR Grade 0–4 | Working prototype |
+| MUST | Referable DR Level 2+ | Working |
+| MUST | Grad-CAM | Working |
+| MUST | Confidence score | Working |
+| MUST | Ophthalmologist review | Working UI |
+| MUST | Clinical report | Working |
+| MUST | Simulink / simulation workflow | Working prototype |
+| SHOULD | Vessel segmentation | Prototype |
+| SHOULD | Lesion evidence | Prototype |
+| SHOULD | Confusion matrix / ROC | Working |
+| NICE | Fovea / optic disc localization | If time |
+| NICE | Neovascularization detection | If time |
+| NICE | Advanced lesion segmentation | If time |
+
+## 5. Overall System Architecture
+
+Recommended product architecture: a professional web application for ophthalmologists and researchers, with the AI engine (Python now, MATLAB at nationals) handling image processing/classification and Simulink providing the resource-allocation simulation.
+
+Browser/Web App → Secure Backend → AI / Medical Image Processing Engine → Database/Storage
+
+↘ Simulink District Simulation
+
+**Suggested stack:**
+
+| Layer | Recommended technology | Purpose |
+|---|---|---|
+| Frontend | React / HTML / CSS / JavaScript | Clinical web interface |
+| Backend | Python / FastAPI or equivalent | API, authentication, orchestration |
+| AI Engine | Python (PyTorch/TensorFlow + OpenCV) now → MATLAB at SIH nationals | Image processing, deep learning, analysis |
+| Simulation | Simulink (SimPy fallback if constrained) | Telemedicine / resource simulation |
+| Database | PostgreSQL/MySQL | Cases, users, metadata, audit logs |
+| File storage | Secure object/file storage | Fundus images and reports |
+| Security | HTTPS, RBAC, encryption, audit logs | Clinical data protection |
+
+## 6. Application Navigation
+
+The left sidebar should remain consistent throughout the application:
+
+DRISHTI · Dashboard · Screening (New Analysis / Screening Queue / History) · AI Analysis (DR Grading / Lesion Analysis / Vessel Analysis / Explainability) · Patient Cases · Analytics · Research Lab · Reports · Settings · Security / Audit Log · Help
+
+## 7. Login, Registration & Identity
+
+**Login**
+- Professional email / ID.
+- Password.
+- Forgot password.
+- Organization sign-in option for future deployment.
+- Optional/target two-factor authentication.
+
+**Registration**
+- Full name.
+- Professional ID.
+- Email.
+- Institution.
+- Role.
+- Department.
+- Password.
+- Professional verification / administrator approval.
+
+**Roles:**
+
+| Role | Access |
+|---|---|
+| Administrator | Users, system configuration, audit logs, district analytics |
+| Ophthalmologist | Cases, AI analysis, reports, validation, history |
+| Researcher | De-identified datasets, research analytics, model validation |
+| Screening Technician | Image capture/upload, quality check, queue |
+
+## 8. Front Page / Dashboard
+
+The dashboard should answer: What is happening today?
+
+- Today's screenings.
+- Cases awaiting ophthalmologist review.
+- High-risk/referable cases.
+- Ungradable image count.
+- Average AI processing time.
+- Recent cases.
+- Screening queue.
+- Quick action: New Screening.
+
+Example dashboard cards: Today's Screenings | Awaiting Review | High Risk | Ungradable
+
+## 9. New Screening Workflow
+
+1. Create/select case.
+2. Enter minimal required patient/case metadata.
+3. Record patient consent for AI-assisted screening (see Section 19).
+4. Select right eye / left eye / both.
+5. Upload fundus image or simulate connected fundus camera capture.
+6. Run image-quality gate.
+7. Enhance acceptable/borderline images.
+8. Run AI analysis.
+9. Display DR grade, referable status, confidence and evidence.
+10. Generate Grad-CAM and lesion overlays.
+11. Ophthalmologist validates or modifies the AI assessment.
+12. Generate report and referral recommendation.
+
+## 10. Image Quality Assessment & Enhancement
+
+This is a major differentiator for rural/portable-camera deployment.
+
+**Quality checks**
+- Focus / sharpness.
+- Illumination quality and uneven lighting.
+- Field of view / retinal coverage.
+- Potentially useful additional checks: exposure, saturation, artifacts.
+
+**Quality gate**
+
+GOOD → Continue; BORDERLINE → Adaptive enhancement; UNGRADABLE → Reject and provide recapture feedback.
+
+**Enhancement pipeline**
+
+Color/illumination normalization → CLAHE → denoising → optional contrast correction → re-evaluate quality. (OpenCV / scikit-image for the internal hackathon build; MATLAB Image Processing Toolbox at nationals — see Section 3.)
+
+Example recapture feedback: "Image ungradable due to poor focus. Please recapture with the camera stabilized and retinal structures in focus."
+
+## 11. Machine Learning / Medical Image Pipeline
+
+Primary objective: create a reliable end-to-end prototype rather than perfect every individual medical detector.
+
+**11.1 DR Classification**
+- Use transfer learning rather than training a very large CNN from scratch — a lightweight backbone (e.g. EfficientNet-B0 or ResNet18/50) fine-tuned on a labeled DR dataset is enough for a 36-hour build.
+- Classes: 0 No DR; 1 Mild NPDR; 2 Moderate NPDR; 3 Severe NPDR; 4 Proliferative DR.
+- Derive Referable DR = Grade/Level 2+.
+- Show confidence and class probabilities where appropriate.
+- See Section 25 for the specific dataset(s) to train/validate on.
+
+**11.2 Retinal Structure Analysis**
+- Optic disc localization.
+- Fovea localization.
+- Blood vessel segmentation.
+- Vessel abnormality/evidence visualization.
+
+**11.3 Lesion Analysis**
+- Microaneurysm candidates.
+- Exudate candidates/segmentation.
+- Hemorrhage evidence.
+- Neovascularization evidence if time permits.
+
+For the 36-hour prototype, lesion detection should be presented as AI-assisted evidence/prototype analysis unless it has been rigorously validated.
+
+## 12. Explainability Module
+
+The system should explain what influenced the AI result rather than only showing a grade.
+
+- Grad-CAM attention map.
+- Original fundus image.
+- AI attention overlay.
+- Lesion-level annotations.
+- Clinical evidence list.
+- Calibrated confidence score.
+- Combined explanation view.
+
+Example explanation: AI predicted Grade 2. Contributing evidence includes microaneurysm candidates, exudate candidates, and abnormal vascular regions. The ophthalmologist can inspect the highlighted regions before accepting or modifying the result.
+
+## 13. Main AI Analysis Interface
+
+Recommended layout: three-column clinical viewer.
+
+| Left | Center | Right |
+|---|---|---|
+| Fundus image, Zoom/Pan | Grad-CAM / lesion / vessel overlays, layer controls | AI Grade, Referable status, Confidence, Clinical evidence |
+
+Under the image: Original \| Vessels \| Microaneurysms \| Exudates \| Hemorrhage \| Grad-CAM \| Optic Disc \| Fovea
+
+Opacity slider and layer toggles should let the ophthalmologist inspect evidence without changing the original image.
+
+## 14. Ophthalmologist Human-in-the-Loop Validation
+
+The AI must not be presented as the final medical authority. The doctor should explicitly be able to agree with or modify the AI result.
+
+- AI Grade 0–4.
+- AI confidence.
+- Referable/non-referable indication.
+- Ophthalmologist Grade 0–4 selector.
+- Agree / Modify.
+- Free-text comments.
+- Reviewer identity and timestamp.
+- Final reviewed status.
+
+## 15. Patient / Case History
+
+- Previous examinations.
+- Previous grades.
+- Previous fundus images.
+- AI vs ophthalmologist decisions.
+- Timeline of changes.
+- AI-assisted progression flag.
+
+Example timeline: Grade 0 → Grade 1 → Grade 2, with side-by-side historical images.
+
+Any progression indicator should be described as AI-assisted and not as a definitive clinical diagnosis.
+
+## 16. Research Lab
+
+This turns the application into a research platform for ophthalmologists, students and validated study workflows.
+
+- Dataset explorer.
+- Create study / experiment.
+- Class distribution.
+- Model comparison.
+- Validation set management.
+- Confusion matrix.
+- Sensitivity/specificity.
+- Precision/F1.
+- ROC-AUC.
+- Export results.
+- De-identified research datasets.
+
+## 17. Analytics & Model Validation
+
+Show a dedicated validation dashboard.
+
+- Confusion matrix.
+- Sensitivity.
+- Specificity.
+- Precision.
+- F1-score.
+- ROC-AUC.
+- Per-class performance.
+- Referable DR performance.
+
+Problem-statement target: >90% sensitivity and >85% specificity for referable DR. The prototype must report actual measured results honestly; targets must not be fabricated.
+
+**Recommended validation table:**
+
+| Metric | Target | Prototype result |
+|---|---|---|
+| Sensitivity for referable DR | >90% | Measure and report |
+| Specificity for referable DR | >85% | Measure and report |
+| ROC-AUC | High | Measure and report |
+| F1-score | High | Measure and report |
+
+## 18. Automated Clinical / Screening Report
+
+- Case ID and eye.
+- Image quality status.
+- AI DR grade.
+- Referable DR status.
+- Confidence.
+- Lesion evidence.
+- Grad-CAM availability.
+- Ophthalmologist assessment.
+- Reviewer comments.
+- Timestamp.
+- Export to PDF.
+
+Use wording such as "AI screening result — ophthalmologist confirmation required," not "definitive diagnosis."
+
+## 19. Security & Privacy
+
+Security should be presented as a core system component.
+
+- HTTPS/TLS for data in transit.
+- Encryption for stored sensitive data.
+- Role-based access control.
+- Strong passwords.
+- Two-factor authentication as a deployment feature.
+- Session timeout.
+- Audit logs.
+- Least-privilege access.
+- Secure image storage.
+- De-identification for research datasets.
+- Controlled report access.
+- Backups and recovery plan for real deployment.
+- Compliance with India's Digital Personal Data Protection (DPDP) Act, 2023 for patient health data.
+- Explicit patient consent captured before AI-assisted screening (see Section 9).
+
+Audit log example: 10:42 — Dr. Sharma viewed case → 10:44 — AI analysis generated → 10:45 — Grad-CAM viewed → 10:47 — AI grade modified → 10:48 — report generated.
+
+## 20. District / Telemedicine Dashboard
+
+- Patients screened.
+- Images processed.
+- Referable cases.
+- Ungradable images.
+- Ophthalmologist queue.
+- Average AI processing time.
+- Average review time.
+- Estimated annual capacity.
+- Required ophthalmologist staffing.
+
+This connects the software product to the Simulink resource-allocation model.
+
+## 21. Simulink Workflow Simulation
+
+Model the operational pipeline:
+
+Patients → Image Acquisition → Quality Screening → AI Processing → Ophthalmologist Queue → Review → Referral
+
+**Key parameters:**
+- Patients/year.
+- Images/hour.
+- Average image size.
+- Bandwidth.
+- AI processing time.
+- Review time.
+- Number of ophthalmologists.
+- Queue capacity.
+
+Demonstrate scenarios with different staffing levels, e.g. 1, 3 and 5 ophthalmologists, and show throughput/queue impact.
+
+Target scenario: district-level service for 100,000+ patients annually.
+
+If Simulink time or licensing is constrained during the internal hackathon, a simplified Python (SimPy) queueing-model prototype can substitute for this section; migrate to full Simulink for SIH nationals, where it is expected.
+
+## 22. End-to-End Product Flow
+
+LOGIN → DASHBOARD → NEW SCREENING → PATIENT/CASE → IMAGE UPLOAD → QUALITY GATE → ENHANCEMENT → DR MODEL → LESION/VESSEL ANALYSIS → GRAD-CAM → AI REPORT → OPHTHALMOLOGIST VALIDATION → FINAL REPORT → HISTORY / ANALYTICS → DISTRICT SIMULATION
+
+## 23. Team Timeline
+
+Fill in actual names against each track below; keep three parallel tracks so no single person blocks the others.
+
+| Hours | Frontend & Backend (Member/s: ___) | AI/ML Pipeline (Member/s: ___) | Simulation, Docs & Demo (Member/s: ___) |
+|---|---|---|---|
+| 0–4 | Repo setup, environments, wireframes | Dataset download & preprocessing | Simulink/SimPy model skeleton |
+| 4–12 | Auth, dashboard, screening workflow UI | Train baseline classifier, quality gate logic | District dashboard UI, sample parameters |
+| 12–20 | AI analysis interface, review UI | Grad-CAM, lesion evidence, confidence calibration | Run staffing scenarios, validation dashboard |
+| 20–28 | Report generation, case history | Model tuning, referable-DR threshold | Polish demo path, record backup video |
+| 28–34 | End-to-end integration testing | Fix issues found during integration | Rehearse judge demo script |
+| 34–36 | Final rehearsal & buffer | Final rehearsal & buffer | Final rehearsal & buffer |
+
+## 24. Risk & Mitigation Plan
+
+| Risk | Mitigation |
+|---|---|
+| MATLAB–web integration eats build time | Use Python AI engine for internal hackathon; port to MATLAB only for SIH nationals (Section 3). |
+| Model underperforms / limited training time | Transfer learning on a small proven backbone; keep a pre-trained checkpoint as fallback. |
+| Live demo fails (network/hardware) | Pre-recorded backup video plus offline cached sample images ready to show without internet. |
+| Overclaiming performance numbers | Report only measured metrics from a held-out validation set; never state unverified figures. |
+| Dataset quality/label noise | Use an established labeled public dataset (Section 25) rather than unverified scraped images. |
+| Running out of time on non-critical features | Strictly follow MUST/SHOULD/NICE priority (Section 4); cut SHOULD/NICE first if behind schedule. |
+| Judges question data-privacy compliance | Cite DPDP Act 2023 compliance and de-identification explicitly (Section 19). |
+
+## 25. Dataset, Research Basis & References
+
+Use an established, labeled public fundus-image dataset rather than a generic placeholder — judges will ask which one.
+
+- APTOS 2019 Blindness Detection (Kaggle) — labeled 0–4 DR severity, a good size for fast prototyping.
+- EyePACS / Diabetic Retinopathy Detection (Kaggle, 2015) — larger dataset, useful for more robust training if time allows.
+- IDRiD (Indian Diabetic Retinopathy Image Dataset) — captured in an Indian hospital with lesion-level annotations; strengthens the India-relevance of the pitch.
+- Messidor / Messidor-2 — additional public benchmark for cross-validation.
+
+Clinical grading reference: International Clinical Diabetic Retinopathy Disease Severity Scale.
+
+Cite the dataset(s) actually used, with source and access date, in the final report and slides per SIH's research/references requirement.
+
+## 26. Recommended Judge Demo
+
+1. Log in as an ophthalmologist.
+2. Show the dashboard and screening queue.
+3. Open New Screening.
+4. Upload a good fundus image.
+5. Show the quality score and enhancement.
+6. Run AI analysis.
+7. Show Grade 0–4, referable status and confidence.
+8. Open Grad-CAM.
+9. Toggle vessel and lesion layers.
+10. Show clinical evidence.
+11. Open Ophthalmologist Review and modify/confirm the AI result.
+12. Generate the report.
+13. Open Research Lab and show validation metrics.
+14. Open District Dashboard.
+15. Run/show the staffing/throughput scenario.
+
+The ideal demo is one continuous story rather than many disconnected screens. Have the backup video and offline sample images ready in case of a live network or hardware failure.
+
+## 27. Unique Selling Proposition
+
+"We are not building just another diabetic-retinopathy classifier. DRISHTI is an explainable, quality-aware, human-in-the-loop screening workflow designed around real-world deployment constraints in resource-constrained primary healthcare centres."
+
+## 28. Key Differentiators
+
+- Image quality gate before AI prediction.
+- Adaptive enhancement for borderline images.
+- Recapture feedback for ungradable images.
+- DR grading + referable DR detection.
+- Lesion-level evidence rather than only a class label.
+- Grad-CAM explainability.
+- Ophthalmologist validation and override.
+- Research/validation environment.
+- Case history and progression view.
+- Security, consent, and audit trail (DPDP-aligned).
+- Low-bandwidth/offline-first capture mode for rural, poorly connected centres.
+- District-level Simulink resource optimization.
+- Scalability discussion for 100,000+ patients/year.
+- Pragmatic phased tooling: fast Python prototype now, MATLAB-compliant build for SIH nationals.
+
+## 29. Impact & Benefits
+
+**Health impact**
+- Earlier detection of referable DR reduces preventable vision loss.
+- Extends specialist-level screening capacity despite an ophthalmologist shortage.
+
+**Economic impact**
+- Screening cost per patient is far lower than a full specialist consultation.
+- Early detection reduces the long-term treatment burden of late-stage DR.
+
+**Social impact**
+- Brings screening to rural/tier-2/tier-3 populations via portable cameras and telemedicine referral.
+- Human-in-the-loop design keeps clinical accountability with the ophthalmologist, building trust in the tool.
+
+**Scalability & alignment**
+- Architecture is designed for 100,000+ patients/year per district and is extensible to other retinal diseases (glaucoma, AMD) as a future roadmap item.
+- Aligns with the goals of the National Programme for Control of Blindness & Visual Impairment (NPCBVI) and the Ayushman Bharat Digital Mission (ABDM).
+
+## 30. Clinical Safety & Claims
+
+- Present the system as a screening/decision-support prototype, not a replacement for an ophthalmologist.
+- Do not fabricate performance numbers.
+- Clearly separate AI prediction from ophthalmologist-confirmed assessment.
+- Use an appropriate research dataset and document its limitations.
+- For real deployment, clinical validation, regulatory compliance, cybersecurity validation and prospective evaluation would be required.
+- Research data should be de-identified and accessed according to organizational policy.

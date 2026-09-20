@@ -1,0 +1,2237 @@
+You are a senior full-stack engineer, UI/UX designer, ML integration engineer, database architect, and healthcare-software product engineer.
+
+I have uploaded a file named:
+
+Drishti.md
+
+READ THE ENTIRE FILE FIRST.
+
+Drishti.md is the primary product specification and source of truth for this project.
+
+Build a complete, functional, production-quality web application called:
+
+# DRISHTI
+
+"Explainable, Quality-Aware Diabetic Retinopathy Screening"
+
+This is a healthcare/ophthalmology clinical decision-support platform designed for ophthalmologists, retinal specialists, screening technicians, researchers, and healthcare administrators.
+
+IMPORTANT:
+
+This is NOT supposed to be a simple landing page, dashboard mockup, or static prototype.
+
+Build a real working full-stack web application with:
+
+- Authentication
+- Role-based access
+- Database
+- Case management
+- Fundus image upload
+- Image quality analysis
+- Image enhancement
+- AI analysis workflow
+- DR severity prediction interface
+- Referable DR detection
+- Grad-CAM visualization
+- SHAP/explainability architecture
+- Lesion evidence visualization
+- Vessel analysis architecture
+- Ophthalmologist review
+- Patient/case history
+- Reports
+- Research Lab
+- Analytics
+- Security
+- Audit logs
+- District operations
+- Resource simulation
+- Settings
+- Light/dark theme
+- Responsive design
+- Professional healthcare UX
+- Proper error handling
+- Model integration architecture
+
+The user is currently training their own diabetic-retinopathy model.
+
+Therefore:
+
+DO NOT train or invent a fake medical model.
+
+Instead, create a clean, production-ready AI adapter/service architecture where the current application can run using a clearly labelled DEMO/MOCK inference provider, and where the user's trained model can later be connected with minimal changes.
+
+The application should be fully functional even before the custom model is integrated.
+
+==================================================
+1. CORE PRODUCT PHILOSOPHY
+==================================================
+
+DRISHTI is not "just an AI classifier".
+
+The product philosophy is:
+
+AI screens
+↓
+AI explains
+↓
+Ophthalmologist reviews
+↓
+Ophthalmologist confirms/modifies
+↓
+System generates report
+↓
+Case becomes part of clinical/research analytics
+
+The AI must NEVER be presented as replacing an ophthalmologist.
+
+Throughout the UI use terminology such as:
+
+"AI Assessment"
+
+"AI Prediction"
+
+"AI Evidence"
+
+"Model Confidence"
+
+"Ophthalmologist Review"
+
+"Final Reviewed Result"
+
+Avoid presenting the AI result as an unquestionable medical diagnosis.
+
+Include a subtle but persistent disclaimer in relevant clinical areas:
+
+"AI-assisted screening. Final clinical interpretation remains with a qualified healthcare professional."
+
+==================================================
+2. TECH STACK
+==================================================
+
+Use a modern, maintainable full-stack architecture.
+
+Preferred stack:
+
+Frontend:
+- React
+- TypeScript
+- Vite or Next.js
+- Tailwind CSS
+- shadcn/ui or equivalent component system
+- Lucide icons
+- Recharts or equivalent for charts
+
+Backend:
+- Node.js
+- TypeScript
+- Express or Fastify
+
+Database:
+- PostgreSQL
+
+ORM:
+- Prisma
+
+Authentication:
+- Secure session/JWT architecture
+- Password hashing with bcrypt/argon2
+- Role-based access control
+
+File storage:
+- Local development storage initially
+- Create an abstraction so S3-compatible storage can be added later
+
+AI service:
+Create an independent AI inference service/interface.
+
+Possible structure:
+
+/ai
+    /providers
+        mockProvider
+        customModelProvider
+    inference.ts
+    quality.ts
+    gradcam.ts
+    shap.ts
+
+The exact implementation can be adapted to the chosen stack.
+
+DO NOT tightly couple the UI to the current mock model.
+
+==================================================
+3. PROJECT ARCHITECTURE
+==================================================
+
+Structure the application cleanly.
+
+Suggested architecture:
+
+frontend/
+backend/
+shared/
+ai/
+database/
+uploads/
+docs/
+
+or an equivalent clean full-stack structure.
+
+Separate:
+
+UI
+API
+business logic
+database
+AI inference
+file storage
+authentication
+authorization
+
+Do not put everything into one giant component or file.
+
+Use reusable components.
+
+Use TypeScript types/interfaces shared between frontend and backend where appropriate.
+
+==================================================
+4. AUTHENTICATION
+==================================================
+
+The application MUST start at a professional login page.
+
+Route:
+
+/login
+
+Design it like professional hospital software.
+
+Left side:
+- DRISHTI branding
+- subtle retinal/fundus visual
+- short product statement
+- security statement
+
+Right side:
+- Email / Professional ID
+- Password
+- Remember device
+- Sign In
+- Forgot Password
+
+Include:
+
+"Secure Clinical Workspace"
+
+Do NOT make the login look like a generic SaaS startup.
+
+After successful login:
+
+redirect to:
+
+/dashboard
+
+==================================================
+5. USER ROLES
+==================================================
+
+Implement RBAC.
+
+Roles:
+
+ADMIN
+OPHTHALMOLOGIST
+RESEARCHER
+TECHNICIAN
+
+Permissions:
+
+ADMIN:
+- users
+- facilities
+- audit logs
+- settings
+- analytics
+- district operations
+
+OPHTHALMOLOGIST:
+- dashboard
+- screening
+- cases
+- AI analysis
+- reports
+- clinical review
+- history
+
+RESEARCHER:
+- research lab
+- datasets
+- experiments
+- analytics
+- model validation
+- de-identified data
+
+TECHNICIAN:
+- image capture/upload
+- image quality
+- screening queue
+
+Protect routes on both frontend AND backend.
+
+Never rely only on hiding UI buttons for authorization.
+
+==================================================
+6. DASHBOARD
+==================================================
+
+Create:
+
+/dashboard
+
+The dashboard should feel like a real ophthalmology clinical workstation.
+
+Header:
+
+"Good morning, Dr. [Name]"
+
+Subtitle:
+
+"Clinical Screening Overview"
+
+Cards:
+
+Today's Screenings
+Awaiting Review
+Referable Cases
+Ungradable Images
+
+Additional metrics:
+
+Average AI Processing Time
+Average Review Time
+AI/Doctor Agreement
+Screening Throughput
+
+Main section:
+
+SCREENING QUEUE
+
+Columns:
+
+Case ID
+Patient/Research ID
+Eye
+Image Quality
+AI Grade
+Confidence
+Referable
+Review Status
+Time
+Action
+
+Use professional medical table design.
+
+Provide:
+
+Search
+Filter
+Sort
+Pagination
+
+==================================================
+7. MAIN SIDEBAR
+==================================================
+
+Persistent left sidebar:
+
+DRISHTI logo
+
+Dashboard
+
+Screening
+  New Analysis
+  Screening Queue
+  History
+
+AI Analysis
+  DR Grading
+  Lesion Analysis
+  Vessel Analysis
+  Explainability
+
+Cases
+
+Analytics
+
+Research Lab
+
+Reports
+
+District Operations
+
+Security / Audit
+
+Settings
+
+Help
+
+The sidebar must collapse.
+
+Collapsed mode:
+icons + tooltips.
+
+==================================================
+8. NEW SCREENING
+==================================================
+
+Route:
+
+/screening/new
+
+Create a multi-step workflow.
+
+Step indicator:
+
+1. Case
+2. Image
+3. Quality
+4. AI Analysis
+5. Review
+6. Report
+
+STEP 1 — CASE
+
+Fields:
+
+Case ID
+Research/Patient ID
+Age
+Diabetes type
+Diabetes duration
+Eye:
+- Right
+- Left
+- Both
+
+Consent confirmation.
+
+Do not unnecessarily collect personally identifying information.
+
+==================================================
+9. FUNDUS IMAGE UPLOAD
+==================================================
+
+Support:
+
+Drag and drop
+
+Browse files
+
+Image preview
+
+JPEG
+PNG
+JPG
+
+Create file validation.
+
+Validate:
+
+file type
+file size
+image dimensions
+
+Show upload progress.
+
+After upload:
+
+automatically move to image quality analysis.
+
+Create a reusable FundusImageViewer component.
+
+==================================================
+10. IMAGE QUALITY ASSESSMENT
+==================================================
+
+This is one of the most important DRISHTI features.
+
+Before performing DR classification:
+
+CHECK IMAGE QUALITY.
+
+Assess:
+
+Focus
+Sharpness
+Illumination
+Field of View
+Retinal Coverage
+Exposure
+Artifacts
+
+Display:
+
+IMAGE QUALITY SCORE
+
+Example:
+
+87 / 100
+
+Breakdown:
+
+Focus       GOOD
+Illumination GOOD
+Field View  GOOD
+Coverage    GOOD
+Artifacts   LOW
+
+Status:
+
+GOOD
+BORDERLINE
+UNGRADABLE
+
+Rules:
+
+GOOD:
+continue normally
+
+BORDERLINE:
+attempt enhancement
+
+UNGRADABLE:
+do not produce a normal AI diagnosis/prediction
+
+Instead show:
+
+"Image may not be reliable for grading."
+
+Give recapture feedback.
+
+Examples:
+
+"Image appears out of focus. Please recapture with the camera stabilized."
+
+"Insufficient retinal field of view."
+
+"Uneven illumination detected."
+
+IMPORTANT:
+
+The quality system should be architected so that the user's future model can replace the demo quality model.
+
+Create:
+
+ImageQualityService
+
+with an interface such as:
+
+analyze(image)
+
+return:
+
+{
+  score,
+  focusScore,
+  illuminationScore,
+  fieldOfViewScore,
+  artifactScore,
+  status,
+  feedback
+}
+
+For now, implement a real basic computer-vision quality pipeline if practical, otherwise use deterministic demo logic clearly labelled as DEMO.
+
+==================================================
+11. IMAGE ENHANCEMENT
+==================================================
+
+For borderline images implement:
+
+CLAHE
+contrast normalization
+illumination normalization
+denoising
+
+If practical, use a backend image-processing library.
+
+Provide:
+
+Original
+Enhanced
+
+side-by-side comparison.
+
+Create an interactive before/after slider.
+
+Controls:
+
+Brightness
+Contrast
+Zoom
+Reset
+
+Do not modify the original image.
+
+Store both:
+
+original image
+processed image
+
+==================================================
+12. AI ANALYSIS ARCHITECTURE
+==================================================
+
+This is extremely important.
+
+The user is training their own model.
+
+Therefore build a clean AI provider interface.
+
+For example:
+
+interface DRModelProvider {
+    analyze(image): Promise<DRAnalysisResult>
+}
+
+DRAnalysisResult should support:
+
+grade
+gradeLabel
+confidence
+classProbabilities
+referable
+lesions
+vessels
+gradcam
+shap
+metadata
+modelVersion
+processingTime
+
+Create:
+
+MockDRModelProvider
+
+and:
+
+CustomModelProvider
+
+The UI should not know which provider is being used.
+
+The user should later be able to replace the provider with their own trained model.
+
+==================================================
+13. DR GRADING
+==================================================
+
+Support International Clinical DR severity levels:
+
+0 — No DR
+1 — Mild NPDR
+2 — Moderate NPDR
+3 — Severe NPDR
+4 — Proliferative DR
+
+Also calculate:
+
+Referable DR = Grade 2+
+
+Show:
+
+Predicted Grade
+
+Grade Label
+
+Confidence
+
+Class probability distribution
+
+Referable:
+
+YES / NO
+
+Do not hardcode fake medical claims.
+
+Demo values must be explicitly marked:
+
+DEMO MODEL
+
+Once the user's real model is integrated, the label can become:
+
+MODEL v1.0
+
+==================================================
+14. MAIN AI ANALYSIS WORKSPACE
+==================================================
+
+This must be the most impressive screen in the application.
+
+Route:
+
+/analysis/:caseId
+
+Use a professional 3-column clinical workstation.
+
+LEFT:
+
+Large retinal image viewer.
+
+Controls:
+
+Zoom
+Pan
+Fit
+Fullscreen
+Reset
+Brightness
+Contrast
+
+CENTER:
+
+Visualization workspace.
+
+Tabs:
+
+Original
+Enhanced
+Vessel Map
+Lesion Map
+Grad-CAM
+SHAP
+Combined
+
+RIGHT:
+
+AI Assessment panel.
+
+Show:
+
+DR Grade
+
+"Moderate NPDR"
+
+Referable DR:
+
+YES
+
+Confidence:
+
+91.2%
+
+Model:
+
+DEMO / MODEL VERSION
+
+Processing time
+
+Clinical Evidence
+
+Microaneurysms
+Exudates
+Hemorrhages
+Vascular abnormalities
+Neovascularization
+
+==================================================
+15. GRAD-CAM
+==================================================
+
+Implement a real visualization architecture.
+
+For the demo provider, generate a deterministic demonstration heatmap.
+
+For the real provider, accept a heatmap generated by the user's model.
+
+UI:
+
+Original image
+
+Heatmap
+
+Overlay
+
+Opacity slider
+
+Show:
+
+"AI Attention"
+
+The user must be able to toggle:
+
+Grad-CAM ON/OFF
+
+and adjust opacity.
+
+Do not simply place a random gradient over the entire image.
+
+The demo implementation should at least produce a plausible deterministic visualization based on the image.
+
+==================================================
+16. SHAP
+==================================================
+
+Create a SHAP/explainability module.
+
+Important:
+
+Do not fake SHAP values and present them as genuine model explanations.
+
+Architect the system so:
+
+if real model supplies SHAP:
+
+display actual SHAP
+
+otherwise:
+
+show:
+
+"SHAP explanation unavailable for current demo model."
+
+The UI should nevertheless be fully designed.
+
+Show:
+
+Feature contribution
+Positive contribution
+Negative contribution
+Feature importance
+
+For image models, support future SHAP image overlays.
+
+==================================================
+17. LESION ANALYSIS
+==================================================
+
+Create:
+
+/analysis/:caseId/lesions
+
+Display:
+
+Microaneurysms
+Exudates
+Hemorrhages
+Neovascularization
+
+Use image markers.
+
+Click marker:
+
+show lesion type
+confidence
+location
+crop
+
+Create a professional lesion evidence panel.
+
+For demo mode:
+
+clearly identify generated evidence as DEMO.
+
+==================================================
+18. VESSEL ANALYSIS
+==================================================
+
+Create vessel visualization.
+
+Display:
+
+Original retina
+
+Vessel segmentation overlay
+
+Controls:
+
+Layer ON/OFF
+Opacity
+
+Show basic statistics where available.
+
+Again, create a clean integration interface for the future real model.
+
+==================================================
+19. OPTIC DISC + FOVEA
+==================================================
+
+Create UI support for:
+
+Optic disc localization
+Fovea localization
+
+Show markers when the AI service returns coordinates.
+
+Do not fabricate clinically meaningful locations.
+
+Demo mode can use placeholder/deterministic coordinates labelled DEMO.
+
+==================================================
+20. CLINICAL REVIEW
+==================================================
+
+This is a CORE feature.
+
+Create:
+
+/review/:caseId
+
+Show:
+
+AI Assessment
+
+Grade 2
+Confidence 91%
+
+Referable DR:
+YES
+
+Then:
+
+OPHTHALMOLOGIST REVIEW
+
+Dropdown/radio:
+
+0 — No DR
+1 — Mild NPDR
+2 — Moderate NPDR
+3 — Severe NPDR
+4 — Proliferative DR
+Ungradable
+
+Buttons:
+
+CONFIRM AI RESULT
+
+MODIFY RESULT
+
+Add:
+
+Clinical Notes
+
+Final assessment
+
+Reviewer identity
+
+Timestamp
+
+Once submitted:
+
+AI Result
+vs
+Final Ophthalmologist Result
+
+Store both permanently.
+
+==================================================
+21. CASE HISTORY
+==================================================
+
+Route:
+
+/cases/:id
+
+Show:
+
+Case details
+
+Historical screenings
+
+Historical fundus images
+
+Historical AI results
+
+Historical ophthalmologist results
+
+Timeline
+
+Grade progression chart
+
+Side-by-side image comparison
+
+Make it easy for an ophthalmologist to compare previous and current examinations.
+
+==================================================
+22. CASE MANAGEMENT
+==================================================
+
+Create:
+
+/cases
+
+Features:
+
+Search
+Filter
+Sort
+Pagination
+
+Filters:
+
+Date
+DR grade
+Referable
+Review status
+Image quality
+Reviewer
+
+Case detail page should contain all information in one organized workspace.
+
+==================================================
+23. REPORT GENERATION
+==================================================
+
+Create professional clinical screening reports.
+
+Include:
+
+DRISHTI Screening Report
+
+Case ID
+
+Eye
+
+Image quality
+
+AI grade
+
+AI confidence
+
+Referable status
+
+Clinical evidence
+
+Grad-CAM
+
+Lesion findings
+
+Ophthalmologist assessment
+
+Reviewer
+
+Comments
+
+Timestamp
+
+Model version
+
+Report disclaimer
+
+Generate:
+
+PDF
+
+Print
+
+Download
+
+Do not claim a definitive diagnosis.
+
+==================================================
+24. RESEARCH LAB
+==================================================
+
+Create:
+
+/research
+
+Features:
+
+Dataset Explorer
+
+Studies
+
+Experiments
+
+Model Versions
+
+Validation
+
+Metrics
+
+Confusion Matrix
+
+ROC Curve
+
+Sensitivity
+
+Specificity
+
+Precision
+
+Recall
+
+F1
+
+ROC-AUC
+
+Referable DR performance
+
+Create a professional research environment.
+
+==================================================
+25. MODEL VALIDATION
+==================================================
+
+Create a validation dashboard.
+
+Important target from the specification:
+
+Referable DR:
+
+Sensitivity >90%
+
+Specificity >85%
+
+BUT:
+
+Never fabricate those numbers.
+
+Show:
+
+TARGET
+
+vs
+
+ACTUAL MEASURED PERFORMANCE
+
+Example:
+
+Target Sensitivity:
+>90%
+
+Measured:
+Not available
+
+The model performance values should eventually come from the user's actual validation pipeline.
+
+==================================================
+26. ANALYTICS
+==================================================
+
+Create analytics dashboards.
+
+Metrics:
+
+Total screenings
+Referable cases
+Ungradable images
+Grade distribution
+Average processing time
+Average review time
+AI/doctor agreement
+Screening volume over time
+Facility performance
+
+Charts should be clean and professional.
+
+==================================================
+27. DISTRICT OPERATIONS
+==================================================
+
+Create:
+
+/operations
+
+Show:
+
+Patients screened
+Images processed
+Referable cases
+Ungradable cases
+Pending reviews
+Average review time
+AI throughput
+Annual capacity
+
+Include a resource allocation visualization.
+
+==================================================
+28. RESOURCE SIMULATION
+==================================================
+
+Create:
+
+/operations/simulation
+
+Inputs:
+
+Patients/year
+Images/hour
+AI processing time
+Average review time
+Bandwidth
+Number of ophthalmologists
+
+Outputs:
+
+Throughput
+Queue length
+Average waiting time
+Annual capacity
+Required staffing
+
+Scenario comparison:
+
+1 ophthalmologist
+3 ophthalmologists
+5 ophthalmologists
+
+Create an architecture that can later connect to Simulink.
+
+For the web prototype, implement a lightweight simulation service.
+
+Do not claim it is Simulink unless it actually is.
+
+Label:
+
+"Web Simulation Prototype"
+
+==================================================
+29. SECURITY
+==================================================
+
+Implement actual security features.
+
+Authentication.
+
+Authorization.
+
+Password hashing.
+
+Secure sessions.
+
+Input validation.
+
+Rate limiting where appropriate.
+
+File validation.
+
+Prevent arbitrary file execution through uploaded images.
+
+Secure file names.
+
+Audit logging.
+
+Protected API routes.
+
+Role-based permissions.
+
+Session expiration.
+
+Security headers.
+
+CSRF protection where relevant to the chosen authentication architecture.
+
+Never expose secrets to the frontend.
+
+Use environment variables.
+
+Provide .env.example.
+
+==================================================
+30. AUDIT LOG
+==================================================
+
+Create:
+
+/security/audit
+
+Track events:
+
+LOGIN
+LOGOUT
+CASE_VIEW
+IMAGE_UPLOAD
+AI_ANALYSIS
+AI_EXPLANATION_VIEW
+AI_RESULT_MODIFIED
+CLINICAL_REVIEW
+REPORT_GENERATED
+DATA_EXPORT
+USER_CREATED
+ROLE_CHANGED
+
+Display:
+
+Timestamp
+User
+Action
+Case
+IP/device metadata where appropriate
+
+==================================================
+31. PRIVACY
+==================================================
+
+Implement privacy-aware design.
+
+Use:
+
+Case ID
+Research ID
+
+instead of exposing unnecessary personal information.
+
+Provide de-identification architecture.
+
+For research exports:
+
+remove direct identifiers.
+
+Create a clear consent field.
+
+Include a privacy notice.
+
+==================================================
+32. LIGHT + DARK MODE
+==================================================
+
+The application MUST support both:
+
+LIGHT MODE
+
+DARK MODE
+
+Do not simply invert colors.
+
+Design both themes intentionally.
+
+Light mode:
+
+Clinical white/neutral surfaces
+Deep readable typography
+Medical blue/teal accents
+
+Dark mode:
+
+Dark neutral background
+Readable light typography
+Controlled blue/teal accents
+No pure black everywhere
+
+Fundus images must remain visually accurate in both themes.
+
+The image viewer itself should remain clinically usable.
+
+Provide:
+
+Theme toggle
+
+and persist user preference.
+
+==================================================
+33. VISUAL DESIGN
+==================================================
+
+The application should look:
+
+Modern
+Professional
+Premium
+Clinical
+Minimal
+Trustworthy
+Technologically advanced
+
+NOT:
+
+Gaming
+Crypto
+Cyberpunk
+Overly futuristic
+Neon
+Cartoonish
+
+Use subtle animations.
+
+Examples:
+
+AI analysis progress
+
+Image processing transitions
+
+Dashboard card entrance
+
+Chart transitions
+
+Sidebar transitions
+
+Modal transitions
+
+Do not use excessive animation.
+
+Clinical usability comes first.
+
+==================================================
+34. LANDING PAGE
+==================================================
+
+Create:
+
+/
+
+Hero:
+
+DRISHTI
+
+"AI-Assisted Retinal Screening. Designed for Clinical Confidence."
+
+Subheading:
+
+"Quality-aware diabetic retinopathy screening with explainable AI, retinal evidence, and ophthalmologist-in-the-loop validation."
+
+CTA:
+
+Start Screening
+
+Explore Platform
+
+Hero visual:
+
+Large fundus image
+
+with subtle overlays:
+
+vessel segmentation
+lesion markers
+Grad-CAM
+AI grade
+confidence
+
+Sections:
+
+Problem
+
+Solution
+
+How DRISHTI Works
+
+Image Quality
+
+Explainable AI
+
+Ophthalmologist-in-the-loop
+
+Research
+
+District Scale
+
+Security
+
+CTA
+
+==================================================
+35. NOTIFICATIONS
+==================================================
+
+Create notification system.
+
+Examples:
+
+New case awaiting review
+
+Analysis completed
+
+Ungradable image
+
+Report generated
+
+Research experiment completed
+
+Security alert
+
+==================================================
+36. SETTINGS
+==================================================
+
+Create:
+
+/settings
+
+Sections:
+
+Profile
+Security
+Theme
+Notifications
+Organization
+AI settings
+Privacy
+
+AI settings can display:
+
+Current model
+Model version
+Provider
+Threshold configuration
+
+Do not allow ordinary users to change clinical thresholds unless their role permits it.
+
+==================================================
+37. DATABASE
+==================================================
+
+Create a proper relational schema.
+
+At minimum:
+
+User
+Role
+Organization
+Case
+FundusImage
+ImageQualityResult
+AIAnalysis
+Lesion
+ClinicalReview
+Report
+AuditLog
+ResearchStudy
+ModelVersion
+SimulationScenario
+Notification
+
+Use foreign keys.
+
+Use timestamps.
+
+Use appropriate indexes.
+
+==================================================
+38. API
+==================================================
+
+Create REST APIs or equivalent.
+
+Examples:
+
+POST /api/auth/login
+
+POST /api/auth/register
+
+GET /api/dashboard
+
+POST /api/cases
+
+GET /api/cases
+
+GET /api/cases/:id
+
+POST /api/cases/:id/images
+
+POST /api/images/:id/quality
+
+POST /api/images/:id/enhance
+
+POST /api/images/:id/analyze
+
+GET /api/analysis/:id
+
+GET /api/analysis/:id/gradcam
+
+GET /api/analysis/:id/shap
+
+POST /api/cases/:id/review
+
+POST /api/cases/:id/report
+
+GET /api/analytics
+
+GET /api/research
+
+GET /api/audit
+
+POST /api/simulation/run
+
+Use proper validation and error responses.
+
+==================================================
+39. AI MODEL INTEGRATION CONTRACT
+==================================================
+
+Create a documented interface for the user's future model.
+
+Example:
+
+POST /api/model/inference
+
+Input:
+
+fundus image
+
+Output:
+
+{
+  "grade": 2,
+  "gradeLabel": "Moderate NPDR",
+  "confidence": 0.91,
+  "probabilities": {
+    "0": 0.02,
+    "1": 0.07,
+    "2": 0.71,
+    "3": 0.15,
+    "4": 0.05
+  },
+  "referable": true,
+  "gradcam": "...",
+  "shap": "...",
+  "lesions": [],
+  "vessels": "...",
+  "opticDisc": {},
+  "fovea": {},
+  "modelVersion": "drishti-model-1.0"
+}
+
+The exact schema can be adjusted, but document it clearly.
+
+The frontend should work with this contract.
+
+==================================================
+40. DEMO AI PROVIDER
+==================================================
+
+Until the user's model is available:
+
+Implement a MockAIProvider.
+
+It must:
+
+- Accept an uploaded image.
+- Run basic image analysis where practical.
+- Return deterministic demo results.
+- Produce demo confidence.
+- Produce demo class probabilities.
+- Produce a visualization.
+- Produce demo Grad-CAM.
+- Return demo lesion evidence.
+
+Every result must visibly state:
+
+"DEMO MODEL"
+
+Do not make demo results appear clinically validated.
+
+Create a central configuration:
+
+AI_PROVIDER=mock
+
+Later:
+
+AI_PROVIDER=custom
+
+The user should only need to replace the provider.
+
+==================================================
+41. REAL IMAGE QUALITY
+==================================================
+
+Unlike the DR model, try to make image quality analysis actually functional.
+
+Use image processing to calculate at least:
+
+brightness/illumination
+contrast
+sharpness/focus
+resolution
+basic field-of-view heuristics
+
+Return a quality score.
+
+Do not overclaim clinical accuracy.
+
+Label it:
+
+"Prototype image-quality assessment"
+
+==================================================
+42. FILE HANDLING
+==================================================
+
+Uploaded fundus images should:
+
+- Validate MIME type
+- Validate extension
+- Validate file size
+- Generate safe server-side filenames
+- Never execute uploaded files
+- Store metadata
+- Store upload timestamp
+- Associate image with case
+- Support deletion by authorized users
+
+Do not expose filesystem paths to users.
+
+==================================================
+43. ERROR HANDLING
+==================================================
+
+Every workflow must handle:
+
+Invalid login
+
+Expired session
+
+Invalid image
+
+Oversized image
+
+Unsupported image
+
+AI service unavailable
+
+AI processing failure
+
+Database failure
+
+Report generation failure
+
+Unauthorized access
+
+Network failure
+
+Show friendly clinical error messages.
+
+Example:
+
+"Analysis could not be completed. Your original image has been preserved. Please try again."
+
+Do not lose uploaded data because of a downstream AI failure.
+
+==================================================
+44. LOADING STATES
+==================================================
+
+Implement professional skeleton/loading states.
+
+Especially:
+
+Dashboard
+
+Case table
+
+Image upload
+
+Image quality
+
+AI processing
+
+Grad-CAM
+
+Reports
+
+Research analytics
+
+==================================================
+45. DEMO DATA
+==================================================
+
+Seed the database with realistic but obviously fictional demo cases.
+
+Examples:
+
+DR-2026-0001
+DR-2026-0002
+DR-2026-0003
+
+Use fictional names only if names are needed.
+
+Do not use real patient data.
+
+Create demo cases across:
+
+Grade 0
+Grade 1
+Grade 2
+Grade 3
+Grade 4
+Ungradable
+
+This makes the dashboard and workflow immediately usable.
+
+==================================================
+46. RESPONSIVE DESIGN
+==================================================
+
+Primary target:
+
+Desktop clinical monitors
+
+Support:
+
+1920x1080
+1440x900
+1280x800
+tablet
+
+The retinal viewer should prioritize image area.
+
+Do not destroy the clinical workstation layout on smaller screens.
+
+==================================================
+47. ACCESSIBILITY
+==================================================
+
+Implement:
+
+Keyboard navigation
+
+Visible focus states
+
+ARIA labels
+
+Accessible forms
+
+Readable contrast
+
+Do not rely only on color.
+
+For example:
+
+Do not show "Referable" only as red.
+
+Show:
+
+REFERABLE
+
+with icon + text.
+
+==================================================
+48. PERFORMANCE
+==================================================
+
+Optimize:
+
+Image loading
+
+Large fundus images
+
+Lazy loading
+
+API calls
+
+Database queries
+
+Chart rendering
+
+Caching
+
+Do not load all images simultaneously.
+
+Use thumbnails for case lists.
+
+Load high-resolution images only in the analysis viewer.
+
+==================================================
+49. TESTING
+==================================================
+
+Create at least basic tests for:
+
+Authentication
+
+RBAC
+
+Image upload validation
+
+Quality analysis
+
+AI provider interface
+
+Case creation
+
+Clinical review
+
+Report generation
+
+API authorization
+
+Do not consider the project complete if only the UI works.
+
+==================================================
+50. DOCUMENTATION
+==================================================
+
+Create:
+
+README.md
+
+ARCHITECTURE.md
+
+AI_INTEGRATION.md
+
+SECURITY.md
+
+API.md
+
+MODEL_INTEGRATION.md
+
+.env.example
+
+Include:
+
+How to run
+
+How to build
+
+How to seed database
+
+How to create admin
+
+How to configure AI provider
+
+How to replace MockAIProvider
+
+How to connect user's trained model
+
+==================================================
+51. MODEL INTEGRATION GUIDE
+==================================================
+
+Create an extremely clear document explaining:
+
+"How to connect my trained DR model"
+
+Include:
+
+Expected input format
+
+Expected image preprocessing
+
+Expected output
+
+DR classes
+
+Confidence
+
+Grad-CAM output
+
+SHAP output
+
+Lesion output
+
+Vessel segmentation output
+
+Model version
+
+API contract
+
+Example response
+
+Example request
+
+The user will implement their own model later.
+
+==================================================
+52. IMPORTANT MEDICAL SAFETY RULES
+==================================================
+
+Do not make claims such as:
+
+"90% accurate"
+
+"Clinically proven"
+
+"Doctor replacement"
+
+unless actual validation data supports them.
+
+Never fabricate validation results.
+
+Never fabricate medical evidence.
+
+Never label a demo AI output as a real diagnosis.
+
+Always distinguish:
+
+DEMO MODEL
+
+from
+
+REAL MODEL
+
+and:
+
+AI ASSESSMENT
+
+from:
+
+FINAL OPHTHALMOLOGIST REVIEW
+
+==================================================
+53. DO NOT OVERENGINEER THE CURRENT MODEL
+==================================================
+
+The user is currently training the actual DR model separately.
+
+Therefore prioritize:
+
+COMPLETE PRODUCT
++
+COMPLETE UX
++
+COMPLETE DATABASE
++
+COMPLETE AUTH
++
+COMPLETE IMAGE PIPELINE
++
+COMPLETE AI INTEGRATION CONTRACT
+
+rather than spending the entire task building a placeholder deep-learning model.
+
+The real model will be integrated later.
+
+==================================================
+54. IMPLEMENTATION PRIORITY
+==================================================
+
+Build in this order:
+
+PHASE 1
+
+Project setup
+
+Database
+
+Authentication
+
+RBAC
+
+Global UI
+
+Theme system
+
+Sidebar
+
+Dashboard
+
+PHASE 2
+
+Cases
+
+New Screening
+
+Image Upload
+
+Image Viewer
+
+Image Quality
+
+Enhancement
+
+PHASE 3
+
+AI Provider interface
+
+Mock AI Provider
+
+DR grading UI
+
+Confidence
+
+Referable DR
+
+Grad-CAM
+
+SHAP architecture
+
+Lesion analysis
+
+Vessel analysis
+
+PHASE 4
+
+Clinical Review
+
+Case History
+
+Reports
+
+PHASE 5
+
+Research Lab
+
+Analytics
+
+Model Validation
+
+PHASE 6
+
+District Operations
+
+Simulation
+
+PHASE 7
+
+Security
+
+Audit logs
+
+Privacy
+
+Testing
+
+Documentation
+
+PHASE 8
+
+Polish
+
+Animations
+
+Responsive behavior
+
+Accessibility
+
+Error handling
+
+Performance
+
+==================================================
+55. FINAL QUALITY BAR
+==================================================
+
+Before declaring the application complete, verify:
+
+[ ] Login works
+
+[ ] Registration works
+
+[ ] RBAC works
+
+[ ] Dashboard works
+
+[ ] Cases can be created
+
+[ ] Images can be uploaded
+
+[ ] Images can be viewed
+
+[ ] Image quality is evaluated
+
+[ ] Borderline images can be enhanced
+
+[ ] Ungradable images produce recapture feedback
+
+[ ] AI analysis workflow works
+
+[ ] DR grades 0–4 are represented
+
+[ ] Referable DR is calculated
+
+[ ] Confidence is displayed
+
+[ ] Grad-CAM architecture works
+
+[ ] SHAP architecture exists
+
+[ ] Lesion analysis exists
+
+[ ] Vessel analysis exists
+
+[ ] Ophthalmologist can review AI
+
+[ ] Ophthalmologist can override AI
+
+[ ] Final review is stored
+
+[ ] Case history works
+
+[ ] Reports work
+
+[ ] Research Lab works
+
+[ ] Validation dashboard works
+
+[ ] District operations works
+
+[ ] Simulation works
+
+[ ] Audit logs work
+
+[ ] Security controls work
+
+[ ] Light theme works
+
+[ ] Dark theme works
+
+[ ] Responsive layout works
+
+[ ] Error states work
+
+[ ] Loading states work
+
+[ ] Demo data exists
+
+[ ] Documentation exists
+
+[ ] Custom model integration is documented
+
+==================================================
+56. VERY IMPORTANT REPLIT AGENT BEHAVIOR
+==================================================
+
+Do NOT stop after creating the initial UI.
+
+Do NOT create static placeholder pages.
+
+Do NOT create buttons that do nothing.
+
+If a real backend feature is feasible, implement it.
+
+If an external service cannot currently be connected, create a proper service abstraction and working local fallback.
+
+Do not ask me unnecessary questions.
+
+Make reasonable engineering decisions yourself.
+
+When something cannot be implemented because the user's trained model is not yet available:
+
+IMPLEMENT THE INTERFACE + API CONTRACT + MOCK PROVIDER + INTEGRATION POINT.
+
+Do not block the rest of the application.
+
+==================================================
+57. FINAL RESULT
+==================================================
+
+The final application should feel like a real professional ophthalmology platform.
+
+When I log in, I should be able to:
+
+Login
+→ Dashboard
+→ Create case
+→ Upload retinal image
+→ Check image quality
+→ Enhance image
+→ Run AI analysis
+→ See DR grade
+→ See confidence
+→ See referable status
+→ View Grad-CAM
+→ View SHAP when available
+→ Inspect lesion evidence
+→ Inspect vessels
+→ Review the AI assessment
+→ Confirm/modify it as an ophthalmologist
+→ Generate report
+→ View case history
+→ Explore analytics
+→ Explore research validation
+→ View district operations
+→ Run simulation
+→ Review audit logs
+
+The interface should look polished enough for:
+
+hospital demonstrations
+ophthalmologist feedback
+SIH judging
+research demonstrations
+future production development
+
+Use Drishti.md as the functional source of truth.
+
+Build the actual application now.

@@ -1,0 +1,1 @@
+- [OpenAPI integer compatibility](api-contract-zod-compat.md) — avoid generated zod.int() until the workspace Zod runtime supports it.
