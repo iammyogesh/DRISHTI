@@ -1015,7 +1015,7 @@ router.post("/screening/quality", async (req: Request, res: Response) => {
     }
 
     try {
-      const mlServiceUrl = process.env.DRISHTI_ML_URL || "http://127.0.0.1:5001";
+      const mlServiceUrl = (process.env.DRISHTI_ML_URL || "http://127.0.0.1:5001").trim().replace(/\/+$/, "");
       const qRes = await fetch(`${mlServiceUrl}/quality`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

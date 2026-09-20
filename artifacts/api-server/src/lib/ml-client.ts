@@ -140,7 +140,10 @@ export interface SimulinkSimulationResponse {
   }>;
 }
 
-const ML_SERVICE_URL = process.env.DRISHTI_ML_URL || "http://127.0.0.1:5001";
+function getMlServiceUrl(): string {
+  return (process.env.DRISHTI_ML_URL || "http://127.0.0.1:5001").trim().replace(/\/+$/, "");
+}
+
 const WORKSPACE_ROOT = path.resolve(__dirname, "../../../../");
 const ML_ROOT = path.join(WORKSPACE_ROOT, "artifacts", "drishti_ml");
 const PYTHON_PATH = path.join(ML_ROOT, ".venv", "Scripts", "python.exe");
@@ -155,13 +158,14 @@ export async function executeMLInference(
   const t0 = Date.now();
   const runTta = options.runTta ?? true;
   const encodeImages = options.encodeImages ?? true;
+  const serviceUrl = getMlServiceUrl();
 
   // 1. Try calling the persistent FastAPI ML & MATLAB Inference Service first
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-    const response = await fetch(`${ML_SERVICE_URL}/analyze`, {
+    const response = await fetch(`${serviceUrl}/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -212,7 +216,8 @@ export async function executeSimulinkSimulation(params: {
   operatingDays?: number;
 }): Promise<SimulinkSimulationResponse> {
   try {
-    const response = await fetch(`${ML_SERVICE_URL}/simulink/simulate`, {
+    const serviceUrl = getMlServiceUrl();
+    const response = await fetch(`${serviceUrl}/simulink/simulate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

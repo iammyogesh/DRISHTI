@@ -149,21 +149,35 @@ def decode_image_input(image_input: str | bytes | np.ndarray) -> np.ndarray | No
         return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     if isinstance(image_input, str):
-        if image_input.startswith("data:image"):
+        trimmed = image_input.strip()
+        if trimmed.startswith("data:image"):
             try:
-                base64_data = image_input.split(",")[1]
+                base64_data = trimmed.split(",", 1)[1]
                 img_bytes = base64.b64decode(base64_data)
                 nparr = np.frombuffer(img_bytes, np.uint8)
-                return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                decoded = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                if decoded is not None:
+                    return decoded
             except Exception:
                 pass
 
-        if os.path.isfile(image_input):
-            decoded = cv2.imread(image_input)
+        # Handle raw base64 without data:image prefix
+        if len(trimmed) > 100 and not trimmed.startswith("http") and not trimmed.startswith("preset-"):
+            try:
+                img_bytes = base64.b64decode(trimmed)
+                nparr = np.frombuffer(img_bytes, np.uint8)
+                decoded = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                if decoded is not None:
+                    return decoded
+            except Exception:
+                pass
+
+        if os.path.isfile(trimmed):
+            decoded = cv2.imread(trimmed)
             if decoded is not None:
                 return decoded
 
-        return generate_synthetic_fundus(image_input)
+        return generate_synthetic_fundus(trimmed)
 
     return None
 

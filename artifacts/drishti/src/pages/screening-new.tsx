@@ -400,49 +400,50 @@ export default function NewScreening() {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const b64 = reader.result as string;
-      if (targetSide === "OD") {
-        setOdBase64(b64);
-      } else {
-        setOsBase64(b64);
+    img.onload = () => {
+      if (img.width < 100 || img.height < 100) {
+        alert("Corrupted or low-resolution image file. Minimum resolution is 100x100 pixels.");
+        URL.revokeObjectURL(objectUrl);
+        return;
       }
 
-      img.onload = () => {
-        if (img.width < 100 || img.height < 100) {
-          alert("Corrupted or low-resolution image file. Minimum resolution is 100x100 pixels.");
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
+      // Generate optimized 512x512 JPEG fundus image
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, 512, 512);
+      }
+      const compressedB64 = canvas.toDataURL("image/jpeg", 0.88);
 
-        const sizeKb = (file.size / 1024).toFixed(1);
-        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-        const formattedSize = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+      const sizeKb = (file.size / 1024).toFixed(1);
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      const formattedSize = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
 
-        if (targetSide === "OD") {
-          setOdFile(file);
-          setOdImageName(file.name);
-          setOdPreviewUrl(objectUrl);
-          setOdMeta({ width: img.width, height: img.height, size: formattedSize, format: file.type.split("/")[1]?.toUpperCase() || "JPG" });
-          evaluateQualityOnImage(img, file, "OD", b64);
-        } else {
-          setOsFile(file);
-          setOsImageName(file.name);
-          setOsPreviewUrl(objectUrl);
-          setOsMeta({ width: img.width, height: img.height, size: formattedSize, format: file.type.split("/")[1]?.toUpperCase() || "JPG" });
-          evaluateQualityOnImage(img, file, "OS", b64);
-        }
-      };
-
-      img.onerror = () => {
-        alert("The selected image file appears corrupted or unreadable. Please choose a valid fundus image.");
-        URL.revokeObjectURL(objectUrl);
-      };
-
-      img.src = objectUrl;
+      if (targetSide === "OD") {
+        setOdBase64(compressedB64);
+        setOdFile(file);
+        setOdImageName(file.name);
+        setOdPreviewUrl(objectUrl);
+        setOdMeta({ width: img.width, height: img.height, size: formattedSize, format: file.type.split("/")[1]?.toUpperCase() || "JPG" });
+        evaluateQualityOnImage(img, file, "OD", compressedB64);
+      } else {
+        setOsBase64(compressedB64);
+        setOsFile(file);
+        setOsImageName(file.name);
+        setOsPreviewUrl(objectUrl);
+        setOsMeta({ width: img.width, height: img.height, size: formattedSize, format: file.type.split("/")[1]?.toUpperCase() || "JPG" });
+        evaluateQualityOnImage(img, file, "OS", compressedB64);
+      }
     };
-    reader.readAsDataURL(file);
+
+    img.onerror = () => {
+      alert("The selected image file appears corrupted or unreadable. Please choose a valid fundus image.");
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    img.src = objectUrl;
   };
 
   const handleSelectReferencePreset = (preset: typeof sampleRetinaPresets[0], targetSide: "OD" | "OS") => {
