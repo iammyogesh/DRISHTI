@@ -204,8 +204,8 @@ def analyze_fundus_image(
     if img_bgr is None:
         return {"error": "Invalid or unreadable fundus image input."}
 
-    # Cap image to 1024px max to prevent OOM on constrained servers
-    MAX_DIM = 1024
+    # Cap image to 384px — model's native training resolution, optimal for memory + accuracy
+    MAX_DIM = 384
     h0, w0 = img_bgr.shape[:2]
     if max(h0, w0) > MAX_DIM:
         scale = MAX_DIM / max(h0, w0)
@@ -361,20 +361,42 @@ def analyze_fundus_image(
     result["evidence"] = evidence_list
 
     # =========================================================================
-    # 7. Encode MATLAB Generated Layers to Base64
+    # 7. Encode MATLAB Generated Layers to Base64 (one at a time to save RAM)
     # =========================================================================
-    if encode_images:
-        orig_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        result["images"] = {
-            "original": _encode_png_base64(orig_rgb),
-            "enhanced": _encode_bgr_png_base64(clahe_bgr),
-            "gradcam_overlay": _encode_bgr_png_base64(gradcam_overlay_bgr),
-            "vessel_overlay": _encode_bgr_png_base64(vessel_overlay_bgr),
-            "lesion_overlay": _encode_bgr_png_base64(lesion_overlay_bgr),
-            "vessel_mask": _encode_png_base64(cv2.cvtColor(vessel_mask, cv2.COLOR_GRAY2RGB)),
-        }
+    def _enc_jpg(bgr: np.ndarray) -> str:
+        """Encode BGR image as JPEG base64 — smaller than PNG, saves RAM."""
+        ok, buf = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, 88])
+        if not ok:
+            return ""
+        return base64.b64encode(buf).decode("utf-8")
 
-    # Attach full MATLAB engine diagnostics
+    if encode_images:
+        images: dict = {}
+
+        orig_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        images["original"] = _enc_jpg(img_bgr)
+        del orig_rgb
+
+        images["enhanced"] = _enc_jpg(clahe_bgr)
+        del clahe_bgr
+
+        images["gradcam_overlay"] = _enc_jpg(gradcam_overlay_bgr)
+        del gradcam_overlay_bgr
+
+        images["vessel_overlay"] = _enc_jpg(vessel_overlay_bgr)
+        del vessel_overlay_bgr
+
+        images["lesion_overlay"] = _enc_jpg(lesion_overlay_bgr)
+        del lesion_overlay_bgr
+
+        vessel_mask_rgb = cv2.cvtColor(vessel_mask, cv2.COLOR_GRAY2BGR)
+        images["vessel_mask"] = _enc_jpg(vessel_mask_rgb)
+        del vessel_mask_rgb
+
+        import gc; gc.collect()
+        result["images"] = images
+
+    # Attach full MATLAB engine diagnostics (reuse already-encoded images, no re-encoding)
     result["matlabEngine"] = {
         "engine": "MathWorks MATLAB Image Processing & Deep Learning Toolbox",
         "matlabVersionSupported": "R2022b / R2023a-b / R2024a-b",
@@ -387,13 +409,7 @@ def analyze_fundus_image(
             "opticDisc": optic_disc,
             "fovea": fovea,
         },
-        "preprocessedImages": {
-            "greenChannel": _encode_bgr_png_base64(cv2.merge([img_bgr[:, :, 1], img_bgr[:, :, 1], img_bgr[:, :, 1]])),
-            "claheAdapthisteq": _encode_bgr_png_base64(clahe_bgr),
-            "vesselOverlay": _encode_bgr_png_base64(vessel_overlay_bgr),
-            "vesselMask": _encode_png_base64(cv2.cvtColor(vessel_mask, cv2.COLOR_GRAY2RGB)),
-            "lesionOverlay": _encode_bgr_png_base64(lesion_overlay_bgr),
-        },
+        "preprocessedImages": result.get("images", {}),
         "matlabToolboxFunctions": [
             "adapthisteq(L, 'ClipLimit', 0.025, 'NumTiles', [8 8], 'Distribution', 'rayleigh')",
             "imtophat(invGreen, strel('line', 11, theta))",

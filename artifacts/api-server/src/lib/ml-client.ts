@@ -156,7 +156,7 @@ export async function executeMLInference(
   options: { runTta?: boolean; encodeImages?: boolean } = {}
 ): Promise<MLAnalysisResponse> {
   const t0 = Date.now();
-  const runTta = options.runTta ?? true;
+  const runTta = options.runTta ?? false; // disabled — runs model twice, doubles peak RAM on free tier
   const encodeImages = options.encodeImages ?? true;
   const serviceUrl = getMlServiceUrl();
 
