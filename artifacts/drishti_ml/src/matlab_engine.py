@@ -630,7 +630,7 @@ def matlab_gradcam_computation(
             cam = torch.sum(weights * fmaps, dim=1, keepdim=True)
             cam = F.relu(cam)
             cam = F.interpolate(cam, size=(h_orig, w_orig), mode="bilinear", align_corners=False)
-            cam_np = cam.squeeze().detach().cpu().numpy()
+            cam_np = cam.squeeze().detach().cpu().to(torch.float32).numpy()
             cam_norm = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
             del cam, cam_np, fmaps, grads, weights, logits, score, small_tensor
             feature_maps.clear()

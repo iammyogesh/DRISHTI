@@ -61,7 +61,10 @@ def load_trained_model(checkpoint_path: str = config.DEFAULT_CHECKPOINT, device:
 
     model = build_model(ckpt["model_name"], ckpt["num_classes"], pretrained=False, dropout=config.DROPOUT)
     model.load_state_dict(ckpt["model_state_dict"])
-    model.to(device)
+    
+    # Extreme Memory Optimization: Convert model weights to 16-bit float (bfloat16)
+    # This physically cuts the model memory and activation map memory in half!
+    model = model.to(torch.bfloat16).to(device)
     model.eval()
 
     return LoadedModel(
@@ -79,7 +82,7 @@ def _to_tensor(rgb_uint8: np.ndarray, device: str) -> torch.Tensor:
     img = rgb_uint8.astype(np.float32) / 255.0
     img = (img - mean) / std
     img = np.transpose(img, (2, 0, 1))
-    return torch.from_numpy(img).unsqueeze(0).float().to(device)
+    return torch.from_numpy(img).unsqueeze(0).to(torch.bfloat16).to(device)
 
 
 def _encode_png_base64(rgb_uint8: np.ndarray) -> str:
