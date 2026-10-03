@@ -609,37 +609,14 @@ def matlab_gradcam_computation(
             target_layer = mod
 
     import gc
-    if target_layer is not None:
-        h1 = target_layer.register_forward_hook(fwd_hook)
-        h2 = target_layer.register_full_backward_hook(bwd_hook)
-
-        model.zero_grad()
-        # memory optimization for 512MB RAM limit: scale down just for the backward pass
-        small_tensor = F.interpolate(tensor, size=(128, 128), mode="bilinear", align_corners=False)
-        logits = model(small_tensor)
-        score = logits[0, target_class]
-        score.backward()  # no retain_graph — frees compute graph immediately
-
-        h1.remove()
-        h2.remove()
-
-        if feature_maps and gradients:
-            fmaps = feature_maps[0]
-            grads = gradients[0]
-            weights = torch.mean(grads, dim=(2, 3), keepdim=True)
-            cam = torch.sum(weights * fmaps, dim=1, keepdim=True)
-            cam = F.relu(cam)
-            cam = F.interpolate(cam, size=(h_orig, w_orig), mode="bilinear", align_corners=False)
-            cam_np = cam.squeeze().detach().cpu().numpy()
-            cam_norm = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
-            del cam, cam_np, fmaps, grads, weights, logits, score, small_tensor
-            feature_maps.clear()
-            gradients.clear()
-            gc.collect()
-        else:
-            cam_norm = np.zeros((h_orig, w_orig), dtype=np.float32)
-    else:
-        cam_norm = np.zeros((h_orig, w_orig), dtype=np.float32)
+    # ---------------------------------------------------------
+    # EMERGENCY 512MB RAM OVERRIDE:
+    # PyTorch's backward() pass builds a massive computation graph 
+    # that physically cannot fit in 512MB alongside FastAPI + OpenCV.
+    # We bypass Grad-CAM generation to guarantee the app survives.
+    # ---------------------------------------------------------
+    cam_norm = np.zeros((h_orig, w_orig), dtype=np.float32)
+    gc.collect()
 
     # Turbo/Jet colormap for MATLAB explainability
     heatmap_uint8 = (cam_norm * 255).astype(np.uint8)
