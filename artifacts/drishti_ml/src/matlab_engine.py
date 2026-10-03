@@ -614,7 +614,9 @@ def matlab_gradcam_computation(
         h2 = target_layer.register_full_backward_hook(bwd_hook)
 
         model.zero_grad()
-        logits = model(tensor)
+        # memory optimization for 512MB RAM limit: scale down just for the backward pass
+        small_tensor = F.interpolate(tensor, size=(128, 128), mode="bilinear", align_corners=False)
+        logits = model(small_tensor)
         score = logits[0, target_class]
         score.backward()  # no retain_graph — frees compute graph immediately
 
@@ -630,7 +632,7 @@ def matlab_gradcam_computation(
             cam = F.interpolate(cam, size=(h_orig, w_orig), mode="bilinear", align_corners=False)
             cam_np = cam.squeeze().detach().cpu().numpy()
             cam_norm = (cam_np - cam_np.min()) / (cam_np.max() - cam_np.min() + 1e-8)
-            del cam, cam_np, fmaps, grads, weights, logits, score
+            del cam, cam_np, fmaps, grads, weights, logits, score, small_tensor
             feature_maps.clear()
             gradients.clear()
             gc.collect()
