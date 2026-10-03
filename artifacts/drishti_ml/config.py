@@ -38,14 +38,14 @@ REFERABLE_THRESHOLD = 2
 # --------------------------------------------------------------------------
 # IMAGE / PREPROCESSING HYPERPARAMETERS
 # --------------------------------------------------------------------------
-IMAGE_SIZE = 384
+IMAGE_SIZE = 224
 USE_BEN_GRAHAM_PREPROCESSING = True
 BEN_GRAHAM_SIGMA_FRACTION = 10  # sigma = image_size / 10
 
 # --------------------------------------------------------------------------
 # MODEL ARCHITECTURE
 # --------------------------------------------------------------------------
-MODEL_NAME = "tf_efficientnetv2_s.in21k_ft_in1k"
+MODEL_NAME = "efficientnet_b0"
 DROPOUT = 0.3
 GRADCAM_TARGET_LAYER = None  # Auto-detected in src/gradcam.py
 

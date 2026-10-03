@@ -11,6 +11,15 @@ import os
 import sys
 import time
 
+# -- EXTREME MEMORY OPTIMIZATION FOR 512MB RAM LIMITS --
+os.environ["MALLOC_ARENA_MAX"] = "2"        # Prevent memory fragmentation
+os.environ["OMP_NUM_THREADS"] = "1"         # Limit thread allocation overhead
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+import torch
+torch.set_num_threads(1)
+# ------------------------------------------------------
+
 # Ensure drishti_ml package root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -44,7 +53,7 @@ _loaded_model: LoadedModel | None = None
 
 class AnalyzeRequest(BaseModel):
     image: str  # File path or base64 data URI
-    run_tta: bool = True
+    run_tta: bool = False
     encode_images: bool = True
 
 

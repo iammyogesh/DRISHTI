@@ -204,8 +204,8 @@ def analyze_fundus_image(
     if img_bgr is None:
         return {"error": "Invalid or unreadable fundus image input."}
 
-    # Cap image to 384px — model's native training resolution, optimal for memory + accuracy
-    MAX_DIM = 384
+    # Cap image to 224px — aligns with EfficientNetB0 standard and heavily optimizes memory for 512MB RAM limit
+    MAX_DIM = 224
     h0, w0 = img_bgr.shape[:2]
     if max(h0, w0) > MAX_DIM:
         scale = MAX_DIM / max(h0, w0)
