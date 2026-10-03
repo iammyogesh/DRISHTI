@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useLocation } from "wouter";
-import { Eye, Lock, Mail, AlertCircle, ArrowRight, UserCheck } from "lucide-react";
+import { Eye, Lock, Mail, AlertCircle, ArrowRight, UserCheck, Zap, Stethoscope, Monitor, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { ThemeToggle } from "@/components/shell";
 
@@ -28,6 +28,32 @@ export default function Login() {
   const [regPhone, setRegPhone] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const DEMO_ACCOUNTS = [
+    { label: "Ophthalmologist", icon: Stethoscope, identifier: "dr.sharma", password: "Password123!", color: "text-blue-600 dark:text-blue-400", bg: "hover:bg-blue-50 dark:hover:bg-blue-950/40 border-blue-200 dark:border-blue-800/60" },
+    { label: "Technician", icon: Monitor, identifier: "tech.patel", password: "Password123!", color: "text-violet-600 dark:text-violet-400", bg: "hover:bg-violet-50 dark:hover:bg-violet-950/40 border-violet-200 dark:border-violet-800/60" },
+    { label: "Administrator", icon: ShieldCheck, identifier: "admin.drishti", password: "Password123!", color: "text-emerald-600 dark:text-emerald-400", bg: "hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60" },
+  ];
+
+  const handleDemoLogin = async (demoIdentifier: string, demoPassword: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: demoIdentifier, password: demoPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Demo login failed.");
+      login(data.token, data.user);
+      setLocation("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Demo access unavailable. Please use your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -205,6 +231,35 @@ export default function Login() {
                   >
                     Register professional account
                   </button>
+                </div>
+
+                {/* Demo Access */}
+                <div className="space-y-2.5 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="h-px flex-1 bg-border/60" />
+                    <span className="flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase text-muted-foreground/60 select-none">
+                      <Zap size={10} className="text-amber-500" />
+                      Try Demo Access
+                    </span>
+                    <span className="h-px flex-1 bg-border/60" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {DEMO_ACCOUNTS.map((account) => (
+                      <button
+                        key={account.label}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleDemoLogin(account.identifier, account.password)}
+                        className={`flex flex-col items-center gap-1.5 rounded-lg border bg-card px-2 py-2.5 text-[10px] font-semibold transition-all duration-150 disabled:opacity-50 ${account.color} ${account.bg}`}
+                      >
+                        <account.icon size={14} />
+                        <span>{account.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-center text-[10px] text-muted-foreground/50 leading-tight">
+                    Demo accounts are read-only and for evaluation purposes only.
+                  </p>
                 </div>
               </form>
             ) : (

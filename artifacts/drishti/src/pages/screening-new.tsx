@@ -16,6 +16,7 @@ import {
   CircleDot,
   Info,
   ChevronDown,
+  FlaskConical,
 } from "lucide-react";
 import { useAnalyzeScreening, useCreateCase } from "@workspace/api-client-react";
 import { demoAnalysisByGrade, type DemoAnalysis } from "@/lib/demo-data";
@@ -71,6 +72,25 @@ export default function NewScreening() {
   const createCase = useCreateCase();
   const analyze = useAnalyzeScreening();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const DEMO_PATIENTS = [
+    { name: "Ramachandran K.", age: "58", gender: "Male", phone: "9876543210", diabetesType: "Type 2", diabetesDuration: "14 years", drHistory: "Mild NPDR — Right Eye (2022)", notes: "Referred from PHC Kancheepuram. Poor glycaemic control (HbA1c 9.2%). Bilateral fundus imaging requested." },
+    { name: "Lakshmi Devi S.", age: "52", gender: "Female", phone: "8765432109", diabetesType: "Type 2", diabetesDuration: "8 years", drHistory: "None", notes: "Routine annual screening. No visual complaints. BP 138/86 mmHg." },
+    { name: "Arjun Mehta", age: "45", gender: "Male", phone: "7654321098", diabetesType: "Type 1", diabetesDuration: "22 years", drHistory: "Severe NPDR (2021) — Laser treated", notes: "Post-laser follow-up. Previous vitreous haemorrhage OS 2021. Annual surveillance." },
+  ];
+
+  const loadDemoPatient = () => {
+    const p = DEMO_PATIENTS[Math.floor(Math.random() * DEMO_PATIENTS.length)];
+    setPatientName(p.name);
+    setAge(p.age);
+    setGender(p.gender);
+    setPhone(p.phone);
+    setDiabetesType(p.diabetesType);
+    setDiabetesDuration(p.diabetesDuration);
+    setDrHistory(p.drHistory);
+    setClinicalNotes(p.notes);
+    setFormError(null);
+  };
 
   useEffect(() => {
     if (eye === "Left") {
@@ -498,11 +518,22 @@ export default function NewScreening() {
         {/* Step 1: Patient Registration */}
         {step === 0 && (
           <div className="space-y-6">
-            <div className="border-b border-border/60 pb-3">
-              <h2 className="text-base font-bold text-foreground">Step 1: Patient Information & Clinical History</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Record patient demographics, diabetes profile, and examined eye for this screening episode.
-              </p>
+            <div className="border-b border-border/60 pb-3 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-bold text-foreground">Step 1: Patient Information & Clinical History</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Record patient demographics, diabetes profile, and examined eye for this screening episode.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={loadDemoPatient}
+                className="shrink-0 flex items-center gap-1.5 rounded-lg border border-amber-300/60 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                title="Auto-fill with a realistic demo patient record"
+              >
+                <FlaskConical size={13} />
+                Load Demo Patient
+              </button>
             </div>
 
             {formError && (

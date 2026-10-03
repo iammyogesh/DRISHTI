@@ -255,12 +255,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1 sm:flex text-xs">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[11px] font-medium text-muted-foreground">
-                Clinical Decision Support
-              </span>
-            </div>
             <ThemeToggle />
           </div>
         </header>
