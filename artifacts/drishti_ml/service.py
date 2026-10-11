@@ -103,16 +103,20 @@ def analyze(req: AnalyzeRequest):
     if not req.image or not req.image.strip():
         raise HTTPException(status_code=400, detail="No image provided for analysis.")
 
+    import gc
+    gc.collect()
+
     try:
         result = analyze_fundus_image(
             req.image,
             _loaded_model,
-            run_tta=req.run_tta,
+            run_tta=False,
             encode_images=req.encode_images,
         )
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
 
+        gc.collect()
         return result
     except HTTPException:
         raise

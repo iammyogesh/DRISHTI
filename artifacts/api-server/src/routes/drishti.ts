@@ -1061,7 +1061,7 @@ router.post("/screening/analyze", async (req: Request, res: Response) => {
     // Run PyTorch ML Inference pipeline (Quality gate, Ben Graham, EfficientNetV2, Grad-CAM++, Vessels, Lesions)
     let analysis: MLAnalysisResponse;
     try {
-      analysis = await executeMLInference(imagePayload, { runTta: true, encodeImages: true });
+      analysis = await executeMLInference(imagePayload, { runTta: false, encodeImages: true });
     } catch (inferErr) {
       console.error("[ML-INFER] Execution error, falling back to cached/simulated model output:", inferErr);
       analysis = analysisFor(caseId);
