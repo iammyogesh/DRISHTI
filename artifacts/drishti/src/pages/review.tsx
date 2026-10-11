@@ -9,6 +9,7 @@ import {
   UserCheck,
   AlertTriangle,
   FileCheck2,
+  Cpu,
 } from "lucide-react";
 import { useGetCase, useReviewCase } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
@@ -213,13 +214,18 @@ export default function Review() {
                         key={layer}
                         type="button"
                         onClick={() => setSelectedLayer(layer)}
-                        className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+                        className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all flex items-center gap-1 ${
                           selectedLayer === layer
                             ? "bg-card text-primary shadow-2xs font-bold"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {layer}
+                        <span>{layer}</span>
+                        {(layer === "Grad-CAM" || layer === "Vessels" || layer === "Lesions") && (
+                          <span className="text-[8px] font-normal px-1 py-0.2 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                            paused
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -237,16 +243,30 @@ export default function Review() {
                       <div className="size-full bg-slate-900" />
                     )}
 
-                    {selectedLayer === "Grad-CAM" && !analysis.images?.gradcam_overlay && (
-                      <div
-                        className="absolute inset-0 pointer-events-none mix-blend-screen"
-                        style={{
-                          background:
-                            analysis.grade >= 2
-                              ? "radial-gradient(circle at 62% 44%, rgba(239, 68, 68, 0.45) 0%, rgba(245, 158, 11, 0.3) 30%, transparent 65%)"
-                              : "radial-gradient(circle at 60% 42%, rgba(245, 158, 11, 0.3) 0%, transparent 50%)",
-                        }}
-                      />
+                    {/* Paused Feature Overlay for Grad-CAM, Vessels, Lesions on 512MB Cloud Tier */}
+                    {(selectedLayer === "Grad-CAM" || selectedLayer === "Vessels" || selectedLayer === "Lesions") && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center bg-slate-950/92 backdrop-blur-sm z-20">
+                        <div className="size-11 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-2">
+                          <Cpu className="size-5 text-amber-400" />
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 mb-1">
+                          512MB RAM Guard
+                        </span>
+                        <h4 className="text-xs font-bold text-white mb-1">
+                          {selectedLayer} Paused
+                        </h4>
+                        <p className="text-[10px] leading-relaxed text-slate-300 max-w-[220px]">
+                          {selectedLayer === "Grad-CAM"
+                            ? "Gradient backpropagation is paused on Render's 512MB free tier to protect memory."
+                            : selectedLayer === "Vessels"
+                            ? "12-orientation morphological line filtering is paused on the 512MB cloud container."
+                            : "Multi-pass lesion segmentation is paused on the 512MB cloud container."}
+                        </p>
+                        <div className="mt-2.5 flex items-center gap-1.5 text-[9px] text-emerald-400 font-semibold bg-emerald-950/50 border border-emerald-800/60 px-2.5 py-0.5 rounded-full">
+                          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          AI Severity Model: 100% Active
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   CircleDot,
   FileCheck,
+  Cpu,
 } from "lucide-react";
 import { useGetCase } from "@workspace/api-client-react";
 import { demoAnalysis, demoAnalysisByGrade, demoCases, sampleRetinaPresets, type DemoAnalysis, type LesionItem } from "@/lib/demo-data";
@@ -254,14 +255,19 @@ export default function AnalysisWorkstation() {
                         key={layer}
                         type="button"
                         onClick={() => setActiveLayer(layer)}
-                        className={`px-3 py-1 rounded text-xs font-semibold transition-all ${
+                        className={`px-3 py-1 rounded text-xs font-semibold transition-all flex items-center gap-1.5 ${
                           activeLayer === layer
                             ? "bg-card text-primary shadow-2xs font-bold"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                         data-testid={`button-layer-${layer.toLowerCase()}`}
                       >
-                        {layer}
+                        <span>{layer}</span>
+                        {(layer === "Grad-CAM" || layer === "Vessels" || layer === "Lesions") && (
+                          <span className="text-[9px] font-normal px-1 py-0.2 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                            paused
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -369,68 +375,42 @@ export default function AnalysisWorkstation() {
                       <div className="absolute inset-0 bg-slate-900" />
                     )}
 
-                    {/* Active Layer Overlay */}
-                    {activeOverlayImg && activeLayer !== "Original" && (
+                    {/* Enhanced Layer Overlay (Working 100%) */}
+                    {activeLayer === "Enhanced" && activeOverlayImg && (
                       <img
                         src={activeOverlayImg}
-                        alt={`${activeLayer} layer`}
+                        alt="Enhanced layer"
                         className="absolute inset-0 size-full object-cover pointer-events-none select-none transition-opacity duration-150"
                         style={{ opacity: Math.max(0.1, layerOpacity / 100) }}
                         draggable={false}
                       />
                     )}
 
-                    {/* Fallback Layer Overlays */}
-                    {!activeOverlayImg && activeLayer !== "Original" && (
-                      <>
-                        {activeLayer === "Enhanced" && (
-                          <div
-                            className="absolute inset-0 bg-teal-500/15 mix-blend-overlay pointer-events-none"
-                            style={{ opacity: layerOpacity / 100 }}
-                          />
-                        )}
-                        {activeLayer === "Grad-CAM" && (
-                          <div
-                            className="absolute inset-0 pointer-events-none mix-blend-screen"
-                            style={{
-                              opacity: layerOpacity / 100,
-                              background:
-                                analysis.grade >= 2
-                                  ? "radial-gradient(circle at 62% 44%, rgba(239, 68, 68, 0.55) 0%, rgba(245, 158, 11, 0.3) 30%, transparent 65%)"
-                                  : "radial-gradient(circle at 60% 42%, rgba(245, 158, 11, 0.35) 0%, transparent 50%)",
-                            }}
-                          />
-                        )}
-                      </>
+                    {/* Paused Feature Notice for Grad-CAM, Vessels, and Lesions on 512MB Cloud Tier */}
+                    {(activeLayer === "Grad-CAM" || activeLayer === "Vessels" || activeLayer === "Lesions") && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-950/92 backdrop-blur-sm z-20">
+                        <div className="size-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-2.5">
+                          <Cpu className="size-6 text-amber-400" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 mb-1.5">
+                          512MB RAM Guard
+                        </span>
+                        <h4 className="text-sm font-bold text-white mb-1.5">
+                          {activeLayer} Paused
+                        </h4>
+                        <p className="text-[11px] leading-relaxed text-slate-300 max-w-[270px]">
+                          {activeLayer === "Grad-CAM"
+                            ? "Gradient activation backpropagation is paused on Render's 512MB free tier to prevent memory overflow."
+                            : activeLayer === "Vessels"
+                            ? "12-orientation morphological line filtering is paused on the 512MB free tier container."
+                            : "Multi-pass lesion candidate segmentation is paused on the 512MB cloud container."}
+                        </p>
+                        <div className="mt-3 flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold bg-emerald-950/50 border border-emerald-800/60 px-3 py-1 rounded-full">
+                          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          AI Severity Model: 100% Operational
+                        </div>
+                      </div>
                     )}
-
-                    {/* Interactive Lesion Candidates (Visible in Lesions layer) */}
-                    {activeLayer === "Lesions" &&
-                      analysis.lesions.map((lesion, idx) => {
-                        const isSelected = selectedLesion?.type === lesion.type && selectedLesion?.x === lesion.x;
-                        return (
-                          <button
-                            key={`${lesion.type}-${idx}`}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleLesionSelect(lesion);
-                            }}
-                            className={`absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-all ${
-                              isSelected
-                                ? "scale-130 border-white bg-white/80 ring-2 ring-primary shadow-md z-10"
-                                : "border-amber-400 bg-amber-400/40 hover:scale-120"
-                            }`}
-                            style={{
-                              left: `${lesion.x}%`,
-                              top: `${lesion.y}%`,
-                            }}
-                            title={`${lesion.type} (${Math.round(lesion.confidence * 100)}%)`}
-                          >
-                            <span className="sr-only">{lesion.type}</span>
-                          </button>
-                        );
-                      })}
                   </div>
                 </div>
 
